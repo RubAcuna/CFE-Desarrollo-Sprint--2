@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang='es'>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="shortcut icon" type="image/x-icon" href="img/r.ico" />
+    <link rel="stylesheet" href="css/styles.css">
+    <title>Robotech | Inicio</title>
+</head>
+
+<body class='d-flex flex-column min-vh-100' data-page='inicio'>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark sticky-top shadow-sm">
+            <div class="container">
+                <a class="navbar-brand fw-bold" href="index.html"><img width="100px" src="img/robo.png" alt="Robo Tech"
+                        class="img-fluid" width="50px"></a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"><span
+                        class="navbar-toggler-icon"></span></button>
+                <div class="collapse navbar-collapse" id="mainNav">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item"><a class="nav-link" data-page="inicio" href="index.html">Inicio</a></li>
+                        <li class="nav-item"><a class="nav-link" data-page="catalogo" href="catalogo.html">Catálogo</a>
+                        </li>
+                        <li class="nav-item"><a class="nav-link" data-page="producto" href="producto.html">Producto</a>
+                        </li>
+                        <li class="nav-item"><a class="nav-link" data-page="carrito" href="carrito.html">Carrito</a>
+                        </li>
+                        <li class="nav-item"><a class="nav-link" data-page="perfil" href="perfil.html">Perfil</a>
+                        </li>
+                        <li class="nav-item"><a class="nav-link" data-page="admin" href="admin.html">Administración</a>
+                        </li>
+                    </ul>
+
+                    <div class="cart-wrapper">
+                    <a href="carrito.html" class="cart-link" aria-label="Ver carrito de compras">
+                        <img src="img/carrito.png" alt="" class="cart-icon">
+                        <span class="carrito-contador" id="carritoContador" aria-live="polite">0</span>
+                    </a>
+                </div>
+
+
+
+                    <button class="btn btn-outline-light btn-sm" id="btnLoginPlaceholder"
+                        style="margin-left: 20px;">Ingresar</button>
+
+
+
+
+
+                </div>
+            </div>
+        </nav>
+    </header>
+    <hr class="separador-celeste">
+    <section class="navbar2 hero-intro">
+        <div class="container py-4 py-lg-5">
+            <div class="row align-items-center g-4 g-lg-5">
+                <div class="col-lg-6">
+                    <div class="revelar">
+
+
+
+                <h1 class="display-4 fw-bold"><img width="250" src="img/iso.png" alt="Robotech" class="img-fluid"></h1>
+                <p class="lead">Robotech: construimos el futuro, activamos tu potencial.</p>
+                <p class="lead ">Crea · Programa · Transforma</p>
+                <div class="d-flex gap-2 flex-wrap">
+                    <a class="btn btn-robotech btn-lg" href="catalogo.html">Explorar equipos</a>
+                    <button class="btn btn-robotech btn-lg" id="btnProjectInfo">Ver alcance</button>
+                </div>
+                <div class="row g-3 mt-4">
+                    <div class="col-4">
+                        <button type="button" class="metric metric-button" data-bs-toggle="modal"
+                            data-bs-target="#entregaModal">
+                            <strong>Entrega inmediata</strong><span>Conocer más</span>
+                        </button>
+                    </div>
+                    <div class="col-4">
+                        <button type="button" class="metric metric-button" data-bs-toggle="modal"
+                            data-bs-target="#costosModal">
+                            <strong>Costos</strong><span>Conocer más</span>
+                        </button>
+                    </div>
+                    <div class="col-4">
+                        <button type="button" class="metric metric-button" data-bs-toggle="modal"
+                            data-bs-target="#garantiaModal">
+                            <strong>Garantías</strong><span>Conocer más</span>
+                        </button>
+                    </div>
+                </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="hero-card revelar">
+                        <section class="hero">
+
+                                <div id="carteleraCarousel" class="carousel slide" data-bs-ride="carousel">
+                                    <div class="carousel-indicators">
+                                        <button type="button" data-bs-target="#carteleraCarousel" data-bs-slide-to="0"
+                                            class="active" aria-current="true" aria-label="Eduy"></button>
+                                        <button type="button" data-bs-target="#carteleraCarousel" data-bs-slide-to="1"
+                                            aria-label="Película 2"></button>
+                                        <button type="button" data-bs-target="#carteleraCarousel" data-bs-slide-to="2"
+                                            aria-label="Película 3"></button>
+                                        <button type="button" data-bs-target="#carteleraCarousel" data-bs-slide-to="3"
+                                            aria-label="Película 4"></button>
+                                        <button type="button" data-bs-target="#carteleraCarousel" data-bs-slide-to="4"
+                                            aria-label="Película 5"></button>
+                                        <button type="button" data-bs-target="#carteleraCarousel" data-bs-slide-to="5"
+                                            aria-label="Película 6"></button>
+                                        <button type="button" data-bs-target="#carteleraCarousel" data-bs-slide-to="6"
+                                            aria-label="Película 7"></button>
+                                        <button type="button" data-bs-target="#carteleraCarousel" data-bs-slide-to="7"
+                                            aria-label="Película 8"></button>
+                                        <button type="button" data-bs-target="#carteleraCarousel" data-bs-slide-to="8"
+                                            aria-label="Película 9"></button>
+                                    </div>
+
+                                    <div class="carousel-inner rounded overflow-hidden">
+                                        <div class="carousel-item active">
+                                            <img src="img/a1.png" class="d-block w-100" alt="Inteligencia artificial">
+                                            <div class="carousel-caption d-none d-md-block">
+                                                <h3>IA como herramienta</h3>
+                                                <p>Utilizaremos en su maximo esplendor la IA para sacarle el mayor
+                                                    provecho
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div class="carousel-item">
+                                            <img src="img/a2.png" class="d-block w-100" alt="Afiche de The Truman Show">
+                                            <div class="carousel-caption d-none d-md-block">
+                                                <h3>Curso de microbit</h3>
+                                                <p>Aprende a programar con microbit y crea tus propios proyectos de
+                                                    robótica
+                                                    y electrónica.
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div class="carousel-item">
+                                            <img src="img/a3.png" class="d-block w-100"
+                                                alt="Afiche de próxima película">
+                                            <div class="carousel-caption d-none d-md-block">
+                                                <h3>Robótica </h3>
+                                                <p>Descubre el mundo de la robótica con nuestros cursos prácticos y
+                                                    hands-on.</p>
+                                            </div>
+                                        </div>
+                                        <div class="carousel-item">
+                                            <img src="img/a4.png" class="d-block w-100" alt="Arduino">
+                                            <div class="carousel-caption d-none d-md-block">
+                                                <h3>Arduino</h3>
+                                                <p>Plataforma de prototipado electrónico basada en un microcontrolador
+                                                    con
+                                                    un lenguaje de programación simplificado.</p>
+                                            </div>
+                                        </div>
+                                        <div class="carousel-item">
+                                            <img src="img/a5.png" class="d-block w-100" alt="Afiche de Impresión 3D">
+                                            <div class="carousel-caption d-none d-md-block">
+                                                <h3>Impresión 3D</h3>
+                                                <p>Transforma tus ideas en realidad con nuestra tecnología de impresión
+                                                    3D
+                                                    de vanguardia.</p>
+                                            </div>
+                                        </div>
+                                        <div class="carousel-item">
+                                            <img src="img/a6.png" class="d-block w-100" alt="Spike">
+                                            <div class="carousel-caption d-none d-md-block">
+                                                <h3>Spike</h3>
+                                                <p>Robot de juguete con capacidades avanzadas de movimiento y
+                                                    comunicación.
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div class="carousel-item">
+                                            <img src="img/a7.png" class="d-block w-100" alt="Controlador ESP 32">
+                                            <div class="carousel-caption d-none d-md-block">
+                                                <h3>Esp 32</h3>
+                                                <p>Plataforma de prototipado electrónico basada en un microcontrolador
+                                                    con
+                                                    un lenguaje de programación simplificado.</p>
+                                            </div>
+                                        </div>
+                                        <div class="carousel-item">
+                                            <img src="img/a8.png" class="d-block w-100" alt="Circuitos y electrónica">
+                                            <div class="carousel-caption d-none d-md-block">
+                                                <h3>Circuitos y electrónica</h3>
+                                                <p>Descubre el mundo emocionante de los circuitos y la electrónica con
+                                                    nuestros kits educativos.</p>
+                                            </div>
+                                        </div>
+                                        <div class="carousel-item">
+                                            <img src="img/a9.png" class="d-block w-100" alt="Crecer con robótica">
+                                            <div class="carousel-caption d-none d-md-block">
+                                                <h3>Crecer con robótica</h3>
+                                                <p>Descubre el mundo emocionante de la robótica con nuestros kits
+                                                    educativos.</p>
+                                            </div>
+                                        </div>
+
+
+                                    </div>
+
+                                    <button class="carousel-control-prev" type="button"
+                                        data-bs-target="#carteleraCarousel" data-bs-slide="prev">
+                                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                        <span class="visually-hidden">Anterior</span>
+                                    </button>
+                                    <button class="carousel-control-next" type="button"
+                                        data-bs-target="#carteleraCarousel" data-bs-slide="next">
+                                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                        <span class="visually-hidden">Siguiente</span>
+                                    </button>
+                                </div>
+                        </section>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <main class="flex-grow-1">
+            <section class="hero">
+               
+
+            </section>
+            <section class="section-gradient py-5">
+                <div class="container">
+                <div class="section-heading">
+                    <div>
+
+
+                        <div class="info-robotica">
+
+                            <div class="revelar">
+                                <h2 class="fw-bold">La robótica como herramienta de aprendizaje</h2>
+                                <p class="text-secondary">La robótica educativa es una herramienta que permite a los
+                                    estudiantes aprender conceptos de ciencia, tecnología, ingeniería y matemáticas
+                                    (STEM)
+                                    de manera práctica y divertida. A través de la construcción y programación de
+                                    robots,
+                                    los estudiantes desarrollan habilidades de resolución de problemas, pensamiento
+                                    crítico
+                                    y trabajo en equipo.</p>
+                            </div>
+                        </div>
+
+
+                        <div class="row g-4 mt-1">
+                            <div class="col-md-6 col-xl-3">
+                                <article class="placeholder-product">
+                                    <div class="placeholder-image"><img height="200" src="img/robopro.png" 
+                                            alt="Kit RoboPro" class="img-fluid"></div>
+                                    <div class="p-3">
+                                        <hr class="product-divider">
+
+                                        <h3 class="h5 mt-2">Kit de desarrollo Robótica Pro</h3>
+                                        <p class="text-secondary small">Con este equipo podrás aprender los fundamentos
+                                            de
+                                            la robótica.</p>
+                                        <hr class="product-price-divider">
+                                        <div class="d-flex justify-content-between align-items-center"><strong>$ 1500</strong><a class="btn btn-primary btn-sm" href="producto.html?id=robopro">Ver kit</a></div>
+                                    </div>
+                                </article>
+                            </div>
+                            <div class="col-md-6 col-xl-3">
+                                <article class="placeholder-product">
+                                    <div class="placeholder-image"><img height="200" src="img/sensores.png"
+                                            alt="Kit Sensores" class="img-fluid"></div>
+                                    <div class="p-3">
+                                        <hr class="product-divider">
+                                        <h3 class="h5 mt-2">Kit de sensores para diferentes tecnologías
+                                        </h3>
+                                        <p class="text-secondary small">Kit de desarrollo para diferentes tecnologías.
+                                        </p>
+                                        <hr class="product-price-divider">
+                                        <div class="d-flex justify-content-between align-items-center"><strong>$ 1850</strong><a class="btn btn-primary btn-sm" href="producto.html?id=sensores">Ver kit</a>
+                                        </div>
+                                    </div>
+                                </article>
+                            </div>
+                            <div class="col-md-6 col-xl-3">
+                                <article class="placeholder-product">
+                                    <div class="placeholder-image"> <img height="200" src="img/ev3.png" alt="Kit EV3"
+                                            class="img-fluid"> </div>
+                                    <div class="p-3">
+                                        <hr class="product-divider">
+                                        <h3 class="h5 mt-2">Kit EV3</h3>
+                                        <p class="text-secondary small">Kit de robótica para educación.</p>
+                                        <hr class="product-price-divider">
+                                        <div class="d-flex justify-content-between align-items-center"><strong>$ 18500</strong><a class="btn btn-primary btn-sm" href="producto.html?id=ev3">Ver kit</a></div>
+                                    </div>
+                                </article>
+                            </div>
+                            <div class="col-md-6 col-xl-3">
+                                <article class="placeholder-product">
+                                    <div class="placeholder-image"><img height="200" src="img/micro.png"
+                                            alt="Kit Microbit" class="img-fluid"></div>
+                                    <div class="p-3">
+                                        <hr class="product-divider">
+                                        <h3 class="h5 mt-2">Kit Microbit</h3>
+                                        <p class="text-secondary small">Kit de desarrollo para la plataforma Microbit.
+                                        </p>
+                                        <hr class="product-price-divider">
+                                        <div class="d-flex justify-content-between align-items-center"><strong>$ 2900</strong><a class="btn btn-primary btn-sm" href="producto.html?id=microbit">Ver kit</a></div>
+                                    </div>
+                                </article>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                </div>
+
+
+
+
+
+            </section>
+            <section class="benefits section-gradient py-4">
+                <div class="container">
+                    <div class="row g-4 text-center">
+                        <div class="col-md-4">
+                            <div class="benefit-card">
+                                <div class="benefit-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24">
+                                        <path class="icon-main" d="M3 7h11v10H3z M14 11h4l3 3v3h-7z" />
+                                        <circle class="icon-accent" cx="7" cy="18" r="2" />
+                                        <circle class="icon-accent" cx="18" cy="18" r="2" />
+                                    </svg>
+                                </div>
+                                <h3>Entrega inmediata</h3>
+                                <p>Con nuestras entregas inmediatas, obtén tus productos sin esperas.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="benefit-card">
+                                <div class="benefit-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24">
+                                        <path class="icon-main" d="M3 4h9l9 9-8 8-10-10z" />
+                                        <circle class="icon-accent" cx="8" cy="9" r="2" />
+                                    </svg>
+                                </div>
+                                <h3>Costo competitivos</h3>
+                                <p>Ofrecemos precios ajustados para garantizar el mejor valor en el mercado.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="benefit-card">
+                                <div class="benefit-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24">
+                                        <path class="icon-main" d="M12 2l8 4v6c0 5-3.4 8.5-8 10-4.6-1.5-8-5-8-10V6z" />
+                                        <path class="icon-accent" d="M8 12l3 3 5-6" />
+                                    </svg>
+                                </div>
+                                <h3>Garantía</h3>
+
+                                <p>Ofrecemos garantía de calidad en todos nuestros productos.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <div class="modal fade robotech-modal" id="entregaModal" tabindex="-1" aria-labelledby="entregaModalTitle" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+                    <div class="modal-header"><div class="modal-heading">
+                        <div class="modal-benefit-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path class="icon-main" d="M3 7h11v10H3z M14 11h4l3 3v3h-7z"/><circle class="icon-accent" cx="7" cy="18" r="2"/><circle class="icon-accent" cx="18" cy="18" r="2"/></svg></div>
+                        <h2 class="modal-title fs-4" id="entregaModalTitle">Entrega inmediata</h2>
+                    </div><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button></div>
+                    <div class="modal-body"><p>Preparamos y despachamos los productos disponibles con rapidez para reducir los tiempos de espera. Informamos el estado del pedido y coordinamos la entrega de forma clara.</p></div>
+                    <div class="modal-footer"><button type="button" class="btn btn-robotech" data-bs-dismiss="modal">Entendido</button></div>
+                </div></div>
+            </div>
+
+            <div class="modal fade robotech-modal" id="costosModal" tabindex="-1" aria-labelledby="costosModalTitle" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+                    <div class="modal-header"><div class="modal-heading">
+                        <div class="modal-benefit-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path class="icon-main" d="M3 4h9l9 9-8 8-10-10z"/><circle class="icon-accent" cx="8" cy="9" r="2"/></svg></div>
+                        <h2 class="modal-title fs-4" id="costosModalTitle">Costos competitivos</h2>
+                    </div><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button></div>
+                    <div class="modal-body"><p>Ofrecemos precios claros y competitivos para facilitar el acceso a la robótica educativa. Cada producto busca equilibrar calidad, utilidad y una inversión adecuada.</p></div>
+                    <div class="modal-footer"><button type="button" class="btn btn-robotech" data-bs-dismiss="modal">Entendido</button></div>
+                </div></div>
+            </div>
+
+            <div class="modal fade robotech-modal" id="garantiaModal" tabindex="-1" aria-labelledby="garantiaModalTitle" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+                    <div class="modal-header"><div class="modal-heading">
+                        <div class="modal-benefit-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path class="icon-main" d="M12 2l8 4v6c0 5-3.4 8.5-8 10-4.6-1.5-8-5-8-10V6z"/><path class="icon-accent" d="M8 12l3 3 5-6"/></svg></div>
+                        <h2 class="modal-title fs-4" id="garantiaModalTitle">Garantía</h2>
+                    </div><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button></div>
+                    <div class="modal-body"><p>Respaldamos nuestros productos con garantía de calidad y asistencia ante fallas. Nuestro objetivo es brindar una solución confiable para aprender, construir y experimentar.</p></div>
+                    <div class="modal-footer"><button type="button" class="btn btn-robotech" data-bs-dismiss="modal">Entendido</button></div>
+                </div></div>
+            </div>
+            <div class="modal fade robotech-modal2" id="projectInfoModal" tabindex="-1">
+                <div class="modal-dialog modal-lg modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2 class="modal-title fs-5">Roadmap</h2><button class="btn-close"
+                                data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p class="modal-intro">El proyecto se desarrollará progresivamente en cuatro sprints.</p>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="sprint-summary"><strong>Sprint 1 · Semanas 1 a 4</strong><span>Inicio,
+                                            identidad visual, HTML, CSS, Bootstrap y diseño responsive</span></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="sprint-summary"><strong>Sprint 2 · Semanas 5 a 8</strong><span>Catálogo
+                                            dinámico, detalle de equipos, trayectoria y LocalStorage</span></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="sprint-summary"><strong>Sprint 3 · Semanas 9 a
+                                            12</strong><span>Firebase,
+                                            autenticación, perfil, pedidos y administración inicial</span></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="sprint-summary"><strong>Sprint 4 · Semanas 13 a
+                                            15</strong><span>Seguridad,
+                                            roles, pruebas, accesibilidad, despliegue y presentación</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+    </div>
+    </div>
+    </main>
+    <hr class="separador-celeste">
+    <footer class="footer py-5 mt-auto">
+        <div class="container">
+            <div class="footer-top d-flex justify-content-between align-items-start flex-wrap gap-4">
+                <div class="footer-brand">
+                    <div class="footer-identity">
+                        <img src="img/iso.png" alt="Robotech" class="footer-logo">
+                        <span class="footer-slogan">Crea · Programa · Transforma</span>
+                    </div>
+                </div>
+                <section class="footer-contact" aria-labelledby="footer-contact-title">
+                    <h2 id="footer-contact-title">Contacto</h2>
+                    <address>
+                        <span class="contact-item">Rivera, Uruguay</span>
+                        <a class="contact-item" href="mailto:contacto@robotech.com.uy">contacto@robotech.com.uy</a>
+                        <a class="contact-item" href="tel:+59899000000">Teléfono: +598 99 000 000</a>
+                    </address>
+                </section>
+                <span class="footer-author">Ruben Acuña - Desarrollo web</span>
+            </div>
+        </div>
+        <div class="container">
+            <p class="footer-copyright">© 2026 Robotech</p> <br> <p>· Un lugar donde acortar brechas en el aprendizaje</p>
+        </div>
+    </footer>
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="appToast" class="toast">
+            <div class="toast-header"><strong class="me-auto">Robotech</strong><button class="btn-close"
+                    data-bs-dismiss="toast"></button></div>
+            <div class="toast-body" id="toastMessage"></div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/base.js"></script>
+    <script src="js/productos.js"></script>
+    <script src="js/carrito.js"></script>
+
+
+
+</body>
+
+</html>
