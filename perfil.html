@@ -44,32 +44,35 @@
             </div>
         </div>
     </nav>
-    <div class="navbar2">I</div>
-    <main class='flex-grow-1'>
-        <main class='flex-grow-1'>
-            <div class="container py-5">
-                <section class="locked-module">
-                    <div class="locked-icon">🔒</div>
-                    <span class="badge rounded-pill text-bg-warning mb-3">Sprint 3 · Semanas 9 a 12</span>
-                    <h1>Área privada del usuario</h1>
-                    <p class="lead">No podrá visualizarse sin iniciar sesión.</p>
-                    <div class="locked-card">
-                        <h2 class="h5">Funcionalidad en desarrollo</h2>
-                        <p>Este módulo forma parte de la arquitectura final, pero su código deberá desarrollarse en el
-                            sprint indicado.</p>
-                        <ul>
-                            <li>Registro</li>
-                            <li>Inicio y cierre de sesión</li>
-                            <li>Persistencia de sesión</li>
-                            <li>Protección de páginas</li>
-                            <li>Datos del usuario</li>
-                            <li>Historial de pedidos</li>
-                        </ul>
-                    </div>
-                    <a class="btn btn-primary btn-sm" href="index.html">Volver al inicio</a>
-                </section>
-            </div>
-        </main>
+    <div class="navbar2" aria-hidden="true"></div>
+    <main class="flex-grow-1 py-5">
+        <div class="container" style="max-width: 760px">
+            <h1>Perfil</h1>
+            <p id="perfilEstado" role="status" aria-live="polite">Cargando perfil…</p>
+            <section id="perfilSinSesion" class="checkout" hidden>
+                <h2 class="h4">Ingresa para ver tu perfil</h2>
+                <p>Inicia sesión o crea una cuenta para guardar tus datos.</p>
+                <button id="perfilIngresar" class="btn btn-robotech" type="button">Ingresar o registrarse</button>
+            </section>
+            <form id="perfilFormulario" class="checkout" hidden>
+                <div class="mb-3">
+                    <label class="form-label" for="perfilUsuario">Usuario</label>
+                    <input id="perfilUsuario" class="form-control" type="text" autocomplete="nickname" maxlength="80" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="perfilEmail">Correo electrónico</label>
+                    <input id="perfilEmail" class="form-control" type="email" readonly>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="perfilRol">Rol</label>
+                    <input id="perfilRol" class="form-control" type="text" readonly>
+                </div>
+                <p class="small">El rol lo gestiona el responsable del proyecto. La contraseña se administra mediante Firebase Authentication.</p>
+                <button id="perfilGuardar" class="btn btn-robotech" type="submit">Guardar cambios</button>
+            </form>
+            <button id="perfilRecargar" class="btn btn-outline-secondary mt-3" type="button" hidden>Volver a cargar perfil</button>
+        </div>
+    </main>
     <hr class="separador-celeste">
     <footer class="footer py-5 mt-auto">
         <div class="container">
@@ -106,8 +109,10 @@
         </div>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
         <script src="js/base.js"></script>
+    <script src="js/login.js"></script>
     <script src="js/productos.js"></script>
     <script src="js/carrito.js"></script>
+    <script src="js/perfil.js"></script>
 </body>
 
 </html>
