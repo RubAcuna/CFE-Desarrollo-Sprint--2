@@ -37,6 +37,10 @@ document.addEventListener('DOMContentLoaded', () => {
             tarjeta.querySelector('[data-descripcion]').textContent = producto.descripcion;
             tarjeta.querySelector('[data-precio]').textContent = producto.precio === null
                 ? 'Consultar precio' : `$ ${formatoPrecio.format(producto.precio)}`;
+            const disponibilidad = document.createElement('p');
+            disponibilidad.className = 'small fw-semibold mt-2';
+            disponibilidad.textContent = describirDisponibilidad(producto, Carrito.stockDisponible(producto.id));
+            tarjeta.querySelector('[data-precio]').after(disponibilidad);
             const enlace = tarjeta.querySelector('[data-detalle]');
             enlace.href = 'producto.html?' + new URLSearchParams({ id: producto.id });
             enlace.setAttribute('aria-label', 'Ver detalle de ' + producto.nombre);
@@ -65,5 +69,6 @@ document.addEventListener('DOMContentLoaded', () => {
         campo.focus();
     });
 
+    document.addEventListener('carrito:actualizado', buscarProductos);
     mostrarProductos(productos);
 });

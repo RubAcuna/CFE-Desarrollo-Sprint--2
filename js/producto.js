@@ -66,6 +66,16 @@ function mostrarDetalleProducto(producto, contenedor) {
     const agregar = crearElementoProducto('button', 'btn btn-robotech mt-3', 'Agregar al carrito');
     agregar.type = 'button';
     agregar.id = 'agregarAlCarrito';
+    const disponibilidad = crearElementoProducto('p', 'fw-semibold mt-3');
+    disponibilidad.setAttribute('aria-live', 'polite');
+    function actualizarDisponibilidad() {
+        const stock = Carrito.stockDisponible(producto.id);
+        disponibilidad.textContent = describirDisponibilidad(producto, stock);
+        agregar.disabled = stock === 0;
+    }
+    actualizarDisponibilidad();
+    document.addEventListener('carrito:actualizado', actualizarDisponibilidad);
+    informacion.append(disponibilidad);
     const estado = crearElementoProducto('p', 'mt-3');
     estado.setAttribute('role', 'status');
     estado.setAttribute('aria-live', 'polite');

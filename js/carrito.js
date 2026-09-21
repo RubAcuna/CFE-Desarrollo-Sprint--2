@@ -4,17 +4,27 @@
 const Carrito = (() => {
     const clave = 'robotech.carrito';
     const limite = 99;
+    function maximoProducto(producto) { return Math.min(limite, obtenerStockDisponible(producto)); }
     function leer() {
         try {
             const datos = JSON.parse(localStorage.getItem(clave) || '[]');
             if (!Array.isArray(datos)) return [];
             const items = new Map();
             datos.forEach(item => {
-                if (!item || !productos.some(p => p.id === item.id) || !Number.isInteger(item.cantidad) || item.cantidad < 1) return;
-                items.set(item.id, Math.min(limite, (items.get(item.id) || 0) + item.cantidad));
+                const producto = productos.find(p => p.id === item?.id);
+                const maximo = maximoProducto(producto);
+                if (!maximo || !Number.isSafeInteger(item.cantidad) || item.cantidad < 1) return;
+                items.set(item.id, Math.min(maximo, (items.get(item.id) || 0) + Math.min(maximo, item.cantidad)));
             });
             return Array.from(items, ([id, cantidad]) => ({ id, cantidad }));
         } catch { return []; }
+    }
+    // El stock base no cambia: las unidades guardadas en el carrito quedan reservadas.
+    // Así la reserva persiste al recargar y se libera al eliminar o reducir cantidades.
+    function stockDisponible(id) {
+        const producto = productos.find(p => p.id === id);
+        const reservadas = leer().find(item => item.id === id)?.cantidad || 0;
+        return Math.max(0, obtenerStockDisponible(producto) - reservadas);
     }
     function guardar(items) {
         try { localStorage.setItem(clave, JSON.stringify(items)); }
@@ -23,10 +33,13 @@ const Carrito = (() => {
         return { ok: true };
     }
     function agregar(id) {
-        if (!productos.some(p => p.id === id)) return { ok: false, mensaje: 'Producto no encontrado.' };
+        const producto = productos.find(p => p.id === id);
+        if (!producto) return { ok: false, mensaje: 'Producto no encontrado.' };
+        const maximo = maximoProducto(producto);
+        if (!maximo) return { ok: false, mensaje: describirDisponibilidad(producto) + '.' };
         const items = leer();
         const item = items.find(p => p.id === id);
-        if (item && item.cantidad >= limite) return { ok: false, mensaje: 'El máximo por kit es de 99 unidades.' };
+        if (item && item.cantidad >= maximo) return { ok: false, mensaje: 'Solo puedes agregar hasta ' + maximo + ' unidades de este kit.' };
         if (item) item.cantidad += 1;
         else items.push({ id, cantidad: 1 });
         const resultado = guardar(items);
@@ -35,7 +48,14 @@ const Carrito = (() => {
     }
     function cambiarCantidad(id, cantidad) {
         if (!Number.isInteger(cantidad) || cantidad < 1 || cantidad > limite) return { ok: false, mensaje: 'Ingresa una cantidad entera entre 1 y 99.' };
-        return guardar(leer().map(item => item.id === id ? { id, cantidad } : item));
+        const producto = productos.find(p => p.id === id);
+        if (!producto) return { ok: false, mensaje: 'Producto no encontrado.' };
+        const maximo = maximoProducto(producto);
+        if (!maximo) return { ok: false, mensaje: describirDisponibilidad(producto) + '.' };
+        if (cantidad > maximo) return { ok: false, mensaje: 'Solo puedes agregar hasta ' + maximo + ' unidades de este kit.' };
+        const items = leer();
+        if (!items.some(item => item.id === id)) return { ok: false, mensaje: 'El producto no está en el carrito.' };
+        return guardar(items.map(item => item.id === id ? { id, cantidad } : item));
     }
     function eliminar(id) { return guardar(leer().filter(item => item.id !== id)); }
     function vaciar() { return guardar([]); }
@@ -159,7 +179,7 @@ const Carrito = (() => {
             const controles = elemento('div', 'd-flex flex-wrap align-items-center gap-2');
             const label = elemento('label', '', 'Cantidad');
             const cantidad = elemento('input', 'form-control carrito-cantidad');
-            cantidad.type = 'number'; cantidad.min = '1'; cantidad.max = String(limite); cantidad.step = '1';
+            cantidad.type = 'number'; cantidad.min = '1'; cantidad.max = String(maximoProducto(producto)); cantidad.step = '1';
             cantidad.value = item.cantidad;
             cantidad.id = 'cantidad-' + item.id; label.htmlFor = cantidad.id;
             cantidad.setAttribute('aria-label', 'Cantidad de ' + producto.nombre);
@@ -195,6 +215,7 @@ const Carrito = (() => {
         renderizar(items);
         renderizarModal(items);
         actualizarCheckout(items);
+        document.dispatchEvent(new Event('carrito:actualizado'));
     }
     document.addEventListener('DOMContentLoaded', () => {
         crearModal();
@@ -215,5 +236,5 @@ const Carrito = (() => {
     });
     window.addEventListener('storage', evento => { if (evento.key === clave || evento.key === null) actualizar(); });
     window.addEventListener('pageshow', actualizar);
-    return { leer, agregar, cambiarCantidad, eliminar, vaciar, actualizar };
+    return { leer, stockDisponible, agregar, cambiarCantidad, eliminar, vaciar, actualizar };
 })();
