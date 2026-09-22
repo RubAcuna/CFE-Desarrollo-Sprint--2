@@ -14,12 +14,37 @@ function filtrarProductos(lista, consulta) {
     });
 }
 
+// Ordena una copia para conservar el catálogo original.
+function ordenarProductos(lista, criterio = 'nombre-asc') {
+    const compararNombre = (a, b) => a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base', numeric: true });
+    return [...lista].sort((a, b) => {
+        if (criterio === 'precio-asc' || criterio === 'precio-desc') {
+            // Los precios por confirmar quedan al final en ambos sentidos.
+            const precioA = Number.isFinite(a.precio);
+            const precioB = Number.isFinite(b.precio);
+            if (precioA !== precioB) return precioA ? -1 : 1;
+            if (precioA && a.precio !== b.precio) {
+                return criterio === 'precio-asc' ? a.precio - b.precio : b.precio - a.precio;
+            }
+            return compararNombre(a, b);
+        }
+        return criterio === 'nombre-desc' ? compararNombre(b, a) : compararNombre(a, b);
+    });
+}
+
+function describirResultados(cantidad, total) {
+    return cantidad === 1
+        ? '1 producto encontrado de ' + total + '.'
+        : cantidad + ' productos encontrados de ' + total + '.';
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const contenedor = document.querySelector('#listaProductos');
     const formulario = document.querySelector('#formBusqueda');
     const campo = document.querySelector('#buscarProducto');
     const botonBuscar = document.querySelector('#btnBuscar');
     const botonLimpiar = document.querySelector('#btnLimpiar');
+    const orden = document.querySelector('#ordenProductos');
     const contador = document.querySelector('#cantidadResultados');
     const sinResultados = document.querySelector('#sinResultados');
     const plantilla = document.querySelector('#plantillaProducto');
@@ -47,16 +72,17 @@ document.addEventListener('DOMContentLoaded', () => {
             fragmento.append(tarjeta);
         });
         contenedor.replaceChildren(fragmento);
-        contador.textContent = `${lista.length} de ${productos.length} kits`;
+        contador.textContent = describirResultados(lista.length, productos.length);
         sinResultados.hidden = lista.length !== 0;
     }
 
     function buscarProductos() {
-        mostrarProductos(filtrarProductos(productos, campo.value));
+        mostrarProductos(ordenarProductos(filtrarProductos(productos, campo.value), orden.value));
     }
 
     // Búsqueda mientras se escribe y al hacer clic en Buscar.
     campo.addEventListener('input', buscarProductos);
+    orden.addEventListener('change', buscarProductos);
     botonBuscar.addEventListener('click', buscarProductos);
     // Enter también busca sin recargar la página.
     formulario.addEventListener('submit', evento => {
@@ -70,5 +96,5 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.addEventListener('carrito:actualizado', buscarProductos);
-    mostrarProductos(productos);
+    buscarProductos();
 });

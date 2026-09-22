@@ -55,6 +55,13 @@
                     <input type="search" id="buscarProducto" class="form-control w-auto flex-grow-1"
                         placeholder="Ej.: Arduino, microbit o sensores" aria-controls="listaProductos">
                     <button type="button" id="btnBuscar" class="btn btn-robotech">Buscar</button>
+                    <label for="ordenProductos" class="visually-hidden">Ordenar por</label>
+                    <select id="ordenProductos" class="form-select w-auto" aria-controls="listaProductos">
+                        <option value="nombre-asc">Nombre: A a Z</option>
+                        <option value="nombre-desc">Nombre: Z a A</option>
+                        <option value="precio-asc">Precio: menor a mayor</option>
+                        <option value="precio-desc">Precio: mayor a menor</option>
+                    </select>
                     <button type="button" id="btnLimpiar" class="btn btn-outline-light">Limpiar</button>
                 </div>
             </form>
