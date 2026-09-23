@@ -131,3 +131,24 @@ Abrir el sitio con Live Server usando localhost (no mediante file://). Correo/co
 
 Las pruebas de interfaz y del servicio con SDK simulado validan registro, roles, manejo de errores y separación de perfiles. La prueba completa con una cuenta real debe realizarla el titular de la cuenta.
 
+
+
+## Catálogo en Firestore
+
+La colección pública es `productos` en `robotech-8afa0`. El identificador del documento es la referencia usada en los enlaces (por ejemplo, `arduino`). Cada documento contiene:
+
+- `nombre`, `descripcion` y `categoria`: texto.
+- `precio`: número en UYU; `stock`: entero no negativo.
+- `disponible`: booleano.
+- `imagenes`: lista de rutas del proyecto (`img/…`) o URLs HTTPS; la primera se usa en tarjetas.
+- `caracteristicas`: lista de textos, mostrada en la ficha si contiene elementos.
+
+La carga inicial de nueve kits está documentada en `datos/productos-iniciales.json`. Conserva el stock de ejemplo de 10 unidades; las características están vacías hasta incorporar especificaciones verificadas. Este archivo no se usa como respaldo en la tienda: los datos mostrados proceden de Firestore.
+
+Inicio, catálogo, ficha y carrito comparten las consultas de `js/productos.js`, a través de `js/firebase.js`. La búsqueda, los filtros por categoría y disponibilidad y los cuatro órdenes se aplican a los productos recuperados. Las consultas fallidas muestran un aviso y permiten reintentar.
+
+Antes de agregar o cambiar cantidades se consulta nuevamente el inventario del servidor. Las unidades en el carrito reducen la disponibilidad mostrada únicamente en ese navegador; no son una reserva global ni descuentan el inventario de otros clientes. El checkout sigue siendo una demostración. Una compra real requiere transacciones de inventario y pedidos en un backend confiable.
+
+Las reglas permiten leer productos sin iniciar sesión y bloquean escrituras desde clientes web. Los productos se administran desde la consola o con credenciales administrativas. Las reglas de perfiles se mantienen. Para desplegar las reglas con Firebase CLI autenticado: `firebase deploy --only firestore:rules --project robotech-8afa0`.
+
+Pruebas de integración con servicio simulado: `node tests/firestore.test.cjs`. Cubren consultas, reintentos, catálogo vacío, documento inexistente, búsqueda, orden, stock vigente, errores y operaciones concurrentes. Servir el proyecto por HTTP para probarlo contra Firebase.

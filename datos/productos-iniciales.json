@@ -1,0 +1,119 @@
+[
+  {
+    "id": "robopro",
+    "nombre": "Kit de desarrollo Robótica Pro",
+    "descripcion": "Con este equipo podrás aprender los fundamentos de la robótica.",
+    "categoria": "Robótica educativa",
+    "precio": 1500,
+    "stock": 10,
+    "disponible": true,
+    "imagenes": [
+      "img/robopro.png"
+    ],
+    "caracteristicas": []
+  },
+  {
+    "id": "sensores",
+    "nombre": "Kit de sensores para diferentes tecnologías",
+    "descripcion": "Kit de desarrollo para diferentes tecnologías.",
+    "categoria": "Sensores y módulos",
+    "precio": 1850,
+    "stock": 10,
+    "disponible": true,
+    "imagenes": [
+      "img/sensores.png"
+    ],
+    "caracteristicas": []
+  },
+  {
+    "id": "ev3",
+    "nombre": "Kit EV3",
+    "descripcion": "Kit de robótica para educación.",
+    "categoria": "Kits SPIKE y EV3",
+    "precio": 18500,
+    "stock": 10,
+    "disponible": true,
+    "imagenes": [
+      "img/ev3.png"
+    ],
+    "caracteristicas": []
+  },
+  {
+    "id": "microbit",
+    "nombre": "Kit Microbit",
+    "descripcion": "Kit de desarrollo para la plataforma Microbit.",
+    "categoria": "Kits micro:bit",
+    "precio": 2900,
+    "stock": 10,
+    "disponible": true,
+    "imagenes": [
+      "img/micro.png"
+    ],
+    "caracteristicas": []
+  },
+  {
+    "id": "arduino",
+    "nombre": "Kit Arduino",
+    "descripcion": "Explora la electrónica y la programación con Arduino.",
+    "categoria": "Kits Arduino",
+    "precio": 2500,
+    "stock": 10,
+    "disponible": true,
+    "imagenes": [
+      "img/arduino.png"
+    ],
+    "caracteristicas": []
+  },
+  {
+    "id": "raspberry-pi",
+    "nombre": "Kit Raspberry Pi",
+    "descripcion": "Desarrolla proyectos de programación con Raspberry Pi.",
+    "categoria": "Kits Raspberry Pi",
+    "precio": 6500,
+    "stock": 10,
+    "disponible": true,
+    "imagenes": [
+      "img/raspberry.png"
+    ],
+    "caracteristicas": []
+  },
+  {
+    "id": "esp32",
+    "nombre": "Kit ESP32 e IoT",
+    "descripcion": "Crea proyectos de electrónica e Internet de las cosas con ESP32.",
+    "categoria": "Kits ESP32 e IoT",
+    "precio": 2200,
+    "stock": 10,
+    "disponible": true,
+    "imagenes": [
+      "img/esp.png"
+    ],
+    "caracteristicas": []
+  },
+  {
+    "id": "spike",
+    "nombre": "Kit SPIKE",
+    "descripcion": "Aprende robótica mediante la construcción y la programación.",
+    "categoria": "Kits SPIKE y EV3",
+    "precio": 24000,
+    "stock": 10,
+    "disponible": true,
+    "imagenes": [
+      "img/spike.png"
+    ],
+    "caracteristicas": []
+  },
+  {
+    "id": "maker",
+    "nombre": "Mega Kit Maker",
+    "descripcion": "Experimenta con electrónica, programación y proyectos maker.",
+    "categoria": "Kits de electrónica",
+    "precio": 8900,
+    "stock": 10,
+    "disponible": true,
+    "imagenes": [
+      "img/majer.png"
+    ],
+    "caracteristicas": []
+  }
+]

@@ -44,6 +44,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const campo = document.querySelector('#buscarProducto');
     const botonBuscar = document.querySelector('#btnBuscar');
     const botonLimpiar = document.querySelector('#btnLimpiar');
+    const categoria = document.querySelector('#categoriaProductos');
+    const soloDisponibles = document.querySelector('#soloDisponibles');
+    const reintentar = document.querySelector('#reintentarProductos');
     const orden = document.querySelector('#ordenProductos');
     const contador = document.querySelector('#cantidadResultados');
     const sinResultados = document.querySelector('#sinResultados');
@@ -74,15 +77,31 @@ document.addEventListener('DOMContentLoaded', () => {
         contenedor.replaceChildren(fragmento);
         contador.textContent = describirResultados(lista.length, productos.length);
         sinResultados.hidden = lista.length !== 0;
+        sinResultados.textContent = productos.length ? 'No encontramos productos con esos filtros. Prueba otra búsqueda.' : 'No hay productos publicados por el momento.';
     }
 
     function buscarProductos() {
-        mostrarProductos(ordenarProductos(filtrarProductos(productos, campo.value), orden.value));
+        if (Productos.estado !== 'listo') {
+            contenedor.replaceChildren();
+            contador.textContent = Productos.estado === 'error'
+                ? 'No se pudieron cargar los productos. Revisa tu conexión e intenta nuevamente.'
+                : 'Cargando productos…';
+            sinResultados.hidden = true;
+            reintentar.hidden = Productos.estado !== 'error';
+            return;
+        }
+        reintentar.hidden = true;
+        const lista = filtrarProductos(productos, campo.value).filter(producto =>
+            (!categoria.value || producto.categoria === categoria.value) &&
+            (!soloDisponibles.checked || Carrito.stockDisponible(producto.id) > 0));
+        mostrarProductos(ordenarProductos(lista, orden.value));
     }
 
     // Búsqueda mientras se escribe y al hacer clic en Buscar.
     campo.addEventListener('input', buscarProductos);
     orden.addEventListener('change', buscarProductos);
+    categoria.addEventListener('change', buscarProductos);
+    soloDisponibles.addEventListener('change', buscarProductos);
     botonBuscar.addEventListener('click', buscarProductos);
     // Enter también busca sin recargar la página.
     formulario.addEventListener('submit', evento => {
@@ -91,10 +110,23 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     botonLimpiar.addEventListener('click', () => {
         campo.value = '';
+        categoria.value = '';
+        soloDisponibles.checked = false;
         buscarProductos();
         campo.focus();
     });
 
+    function actualizarCategorias() {
+        const anterior = categoria.value;
+        categoria.replaceChildren(new Option('Todas las categorías', ''));
+        [...new Set(productos.map(p => p.categoria))].sort((a, b) => a.localeCompare(b, 'es'))
+            .forEach(nombre => categoria.append(new Option(nombre, nombre)));
+        if ([...categoria.options].some(opcion => opcion.value === anterior)) categoria.value = anterior;
+        buscarProductos();
+    }
+    reintentar.addEventListener('click', () => Productos.cargar({ forzar: true }).catch(() => {}));
+    document.addEventListener('productos:actualizados', actualizarCategorias);
     document.addEventListener('carrito:actualizado', buscarProductos);
+    Productos.cargar().catch(() => {});
     buscarProductos();
 });

@@ -1,6 +1,6 @@
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, updateDoc, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+import { getFirestore, collection, getDocsFromServer, getDocFromServer, doc, getDoc, updateDoc, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 const firebaseConfig = {
     apiKey: "AIzaSyBBaLxBzpPxl6IES1x8gDbW9JDGHGLQGGk",
     authDomain: "robotech-8afa0.firebaseapp.com",
@@ -94,4 +94,16 @@ export async function actualizarNombreUsuario(usuario) {
     proveedor: token.signInProvider,
     ultimoAcceso: serverTimestamp()
   });
+}
+
+// Las consultas de inventario requieren respuesta del servidor, sin usar stock de caché.
+export async function consultarProductos() {
+  if (!app) throw new Error('Firebase no está disponible.');
+  const snapshot = await getDocsFromServer(collection(getFirestore(app), 'productos'));
+  return snapshot.docs.map(documento => ({ ...documento.data(), id: documento.id }));
+}
+export async function consultarProducto(id) {
+  if (!app) throw new Error('Firebase no está disponible.');
+  const snapshot = await getDocFromServer(doc(getFirestore(app), 'productos', id));
+  return snapshot.exists() ? { ...snapshot.data(), id: snapshot.id } : null;
 }

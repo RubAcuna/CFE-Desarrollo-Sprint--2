@@ -1,6 +1,11 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Catálogo público; la carga y edición se realizan con permisos administrativos.
+    match /productos/{productoId} {
+      allow read: if true;
+      allow write: if false;
+    }
     match /usuarios/{uid} {
       function propietario() {
         return request.auth != null && request.auth.uid == uid;

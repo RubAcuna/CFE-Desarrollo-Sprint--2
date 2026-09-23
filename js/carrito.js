@@ -1,6 +1,6 @@
 'use strict';
 
-// Solo se guardan identificadores y cantidades; los precios vienen de productos.js.
+// Solo se guardan identificadores y cantidades; los precios y existencias se consultan en Firestore.
 const Carrito = (() => {
     const clave = 'robotech.carrito';
     const limite = 99;
@@ -19,7 +19,8 @@ const Carrito = (() => {
             return Array.from(items, ([id, cantidad]) => ({ id, cantidad }));
         } catch { return []; }
     }
-    // El stock base no cambia: las unidades guardadas en el carrito quedan reservadas.
+    // Disponibilidad para este navegador: stock de Firestore menos su carrito local.
+    // Esto no reserva inventario global ni modifica el stock en Firestore.
     // Así la reserva persiste al recargar y se libera al eliminar o reducir cantidades.
     function stockDisponible(id) {
         const producto = productos.find(p => p.id === id);
@@ -32,7 +33,7 @@ const Carrito = (() => {
         actualizar();
         return { ok: true };
     }
-    function agregar(id) {
+    function agregarValidado(id) {
         const producto = productos.find(p => p.id === id);
         if (!producto) return { ok: false, mensaje: 'Producto no encontrado.' };
         const maximo = maximoProducto(producto);
@@ -46,7 +47,7 @@ const Carrito = (() => {
         if (resultado.ok) mostrarModal();
         return resultado;
     }
-    function cambiarCantidad(id, cantidad) {
+    function cambiarCantidadValidada(id, cantidad) {
         if (!Number.isInteger(cantidad) || cantidad < 1 || cantidad > limite) return { ok: false, mensaje: 'Ingresa una cantidad entera entre 1 y 99.' };
         const producto = productos.find(p => p.id === id);
         if (!producto) return { ok: false, mensaje: 'Producto no encontrado.' };
@@ -57,8 +58,32 @@ const Carrito = (() => {
         if (!items.some(item => item.id === id)) return { ok: false, mensaje: 'El producto no está en el carrito.' };
         return guardar(items.map(item => item.id === id ? { id, cantidad } : item));
     }
-    function eliminar(id) { return guardar(leer().filter(item => item.id !== id)); }
-    function vaciar() { return guardar([]); }
+    let cola = Promise.resolve();
+    function encolar(operacion) {
+        const resultado = cola.then(operacion).catch(() => ({ ok: false,
+            mensaje: 'No se pudo verificar el inventario. Revisa tu conexión e intenta nuevamente.' }));
+        cola = resultado;
+        return resultado;
+    }
+    function agregar(id) {
+        return encolar(async () => {
+            await Productos.cargar({ forzar: true });
+            return agregarValidado(id);
+        });
+    }
+    function cambiarCantidad(id, cantidad) {
+        return encolar(async () => {
+            await Productos.cargar({ forzar: true });
+            return cambiarCantidadValidada(id, cantidad);
+        });
+    }
+    function eliminar(id) {
+        return encolar(async () => {
+            await Productos.cargar();
+            return guardar(leer().filter(item => item.id !== id));
+        });
+    }
+    function vaciar() { return encolar(() => guardar([])); }
     function elemento(tag, clase, texto) {
         const nodo = document.createElement(tag);
         nodo.className = clase;
@@ -93,6 +118,7 @@ const Carrito = (() => {
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar carrito"></button>
                     </div>
                     <div class="modal-body">
+                        <button id="reintentarInventarioModal" class="btn btn-robotech mb-3" type="button" hidden>Reintentar inventario</button>
                         <p id="modalCarritoVacio">Tu carrito está vacío. Explora el catálogo y elige tu próximo kit.</p>
                         <ul id="modalCarritoItems" class="list-unstyled d-grid gap-3 mb-0"></ul>
                         <p id="modalCarritoTotal" class="fs-5 fw-bold mt-4 mb-0"></p>
@@ -110,6 +136,7 @@ const Carrito = (() => {
             enlace.setAttribute('data-bs-target', '#modalCarrito');
             enlace.setAttribute('aria-haspopup', 'dialog');
         });
+        document.querySelector('#reintentarInventarioModal').addEventListener('click', () => Productos.cargar({ forzar: true }).catch(() => {}));
         modal.addEventListener('show.bs.modal', actualizar);
     }
     function mostrarModal() {
@@ -183,8 +210,9 @@ const Carrito = (() => {
             cantidad.value = item.cantidad;
             cantidad.id = 'cantidad-' + item.id; label.htmlFor = cantidad.id;
             cantidad.setAttribute('aria-label', 'Cantidad de ' + producto.nombre);
-            cantidad.addEventListener('change', () => {
-                const resultado = cambiarCantidad(item.id, Number(cantidad.value));
+            cantidad.addEventListener('change', async () => {
+                cantidad.disabled = true;
+                const resultado = await cambiarCantidad(item.id, Number(cantidad.value));
                 if (!resultado.ok) cantidad.value = item.cantidad;
                 avisar(resultado, 'Cantidad actualizada.');
                 if (resultado.ok) document.getElementById('cantidad-' + item.id)?.focus();
@@ -192,8 +220,9 @@ const Carrito = (() => {
             const quitar = elemento('button', 'btn btn-robotech', 'Eliminar');
             quitar.type = 'button';
             quitar.setAttribute('aria-label', 'Eliminar ' + producto.nombre);
-            quitar.addEventListener('click', () => {
-                const resultado = eliminar(item.id);
+            quitar.addEventListener('click', async () => {
+                quitar.disabled = true;
+                const resultado = await eliminar(item.id);
                 avisar(resultado, producto.nombre + ' eliminado.');
                 if (resultado.ok) (lista.querySelector('button') || document.querySelector('#seguirComprando')).focus();
             });
@@ -208,6 +237,32 @@ const Carrito = (() => {
         document.querySelector('#preciosPendientes').hidden = !pendientes;
     }
     function actualizar() {
+        const reintentarModal = document.querySelector('#reintentarInventarioModal');
+        if (reintentarModal) reintentarModal.hidden = Productos.estado !== 'error';
+        if (Productos.estado !== 'listo') {
+            const mensaje = Productos.estado === 'error'
+                ? 'No se pudo consultar el inventario. El carrito guardado se conserva. Reintenta la carga.'
+                : 'Cargando inventario…';
+            ['#estadoCarrito', '#modalCarritoVacio'].forEach(selector => {
+                const nodo = document.querySelector(selector);
+                if (nodo) { nodo.textContent = mensaje; nodo.hidden = false; }
+            });
+            ['#itemsCarrito', '#modalCarritoItems'].forEach(selector => document.querySelector(selector)?.replaceChildren());
+            ['#carritoVacio', '#resumenCarrito', '#finalizarCompra', '#modalCarritoTotal', '#modalCarritoPendientes'].forEach(selector => {
+                const nodo = document.querySelector(selector);
+                if (nodo) nodo.hidden = true;
+            });
+            const reintentar = document.querySelector('#reintentarInventario');
+            if (reintentar) reintentar.hidden = Productos.estado !== 'error';
+            document.dispatchEvent(new Event('carrito:actualizado'));
+            return;
+        }
+        const reintentar = document.querySelector('#reintentarInventario');
+        if (reintentar) reintentar.hidden = true;
+        const estado = document.querySelector('#estadoCarrito');
+        if (estado) estado.textContent = '';
+        const vacio = document.querySelector('#modalCarritoVacio');
+        if (vacio) vacio.textContent = 'Tu carrito está vacío. Explora el catálogo y elige tu próximo kit.';
         const items = leer();
         const unidades = items.reduce((suma, item) => suma + item.cantidad, 0);
         document.querySelectorAll('.carrito-contador').forEach(nodo => nodo.textContent = unidades);
@@ -219,17 +274,26 @@ const Carrito = (() => {
     }
     document.addEventListener('DOMContentLoaded', () => {
         crearModal();
+        const reintentar = elemento('button', 'btn btn-robotech mb-3', 'Reintentar carga del inventario');
+        reintentar.id = 'reintentarInventario';
+        reintentar.type = 'button';
+        reintentar.hidden = true;
+        document.querySelector('#estadoCarrito')?.after(reintentar);
+        reintentar.addEventListener('click', () => Productos.cargar({ forzar: true }).catch(() => {}));
+        document.addEventListener('productos:actualizados', actualizar);
+        Productos.cargar().catch(() => {});
         actualizar();
-        document.querySelector('#formFinalizarCompra')?.addEventListener('submit', evento => {
+        document.querySelector('#formFinalizarCompra')?.addEventListener('submit', async evento => {
             evento.preventDefault();
+            try { await Productos.cargar({ forzar: true }); } catch { return; }
             const items = leer();
             const { total, pendientes } = resumen(items);
             actualizar();
             if (!items.length || pendientes) return;
             document.querySelector('#estadoCompra').textContent = 'Resumen confirmado: ' + precio(total) + ' UYU con eBROU. Esta es una demostración; no se realizó ningún pago ni se envió un pedido. Tus productos permanecen en el carrito.';
         });
-        document.querySelector('#vaciarCarrito')?.addEventListener('click', () => {
-            const resultado = vaciar();
+        document.querySelector('#vaciarCarrito')?.addEventListener('click', async () => {
+            const resultado = await vaciar();
             avisar(resultado, 'Carrito vaciado.');
             if (resultado.ok) document.querySelector('#seguirComprando').focus();
         });

@@ -15,8 +15,8 @@
 body {
     font-family:verdana, sans-serif;
     font-size: 1rem;
-    color: var(--ink);
-    background: var(--surface)
+    color: #fff;
+    background: var(--gradient-robotech)
 }
 
 h1,
@@ -58,12 +58,7 @@ input[type="reset"],
 
 .main-gradiente {
   min-height: 100vh;
-  background: linear-gradient(
-    to bottom,
-    #14213d 0%,
-    #ec0aa6 100%,
-
-  );
+  background: var(--gradient-robotech);
 }
 
 article {
@@ -263,7 +258,7 @@ article:hover {
 }
 
 .hero {
-    background: radial-gradient(circle at 15% 20%, #eef3ff 0, #fff 48%, #eef3ff 100%)
+    background: var(--gradient-robotech)
 }
 
 .hero-card {
@@ -840,3 +835,19 @@ article:hover {
 .carrito-modal-info { flex: 1 1 180px; min-width: 0; overflow-wrap: anywhere; }
 .carrito-modal-item strong { color: #00bde7; }
 .btn-robotech:focus-visible, .cart-link:focus-visible { outline: 3px solid #00bde7; outline-offset: 3px; }
+
+/* Contraste de los paneles claros sobre el fondo común de todas las páginas. */
+.hero-card,
+.floating-card,
+.info-robotica,
+.sprint-summary,
+.locked-module,
+.locked-card,
+.carrito-item,
+.checkout {
+    color: var(--ink);
+}
+
+#detalleProducto .text-secondary {
+    color: #d7dbe5 !important;
+}

@@ -1,7 +1,7 @@
 'use strict';
 
 // Ejemplo: producto.html?id=arduino. La URL solo identifica el kit;
-// los datos siempre se obtienen del arreglo de productos.js.
+// los datos siempre se consultan en Firestore.
 function obtenerIdProducto(busqueda = window.location.search) {
     return new URLSearchParams(busqueda).get('id')?.trim() || null;
 }
@@ -44,6 +44,13 @@ function mostrarDetalleProducto(producto, contenedor) {
     imagen.src = producto.imagen;
     imagen.alt = producto.nombre;
     columnaImagen.append(imagen);
+    producto.imagenes.slice(1).forEach((url, indice) => {
+        const adicional = crearElementoProducto('img', 'img-fluid rounded mt-3');
+        adicional.src = url;
+        adicional.alt = producto.nombre + ' — imagen ' + (indice + 2);
+        adicional.loading = 'lazy';
+        columnaImagen.append(adicional);
+    });
 
     const informacion = crearElementoProducto('div', 'col-md-6');
     const nombre = crearElementoProducto('h1', 'mb-3', producto.nombre);
@@ -57,7 +64,7 @@ function mostrarDetalleProducto(producto, contenedor) {
         crearElementoProducto('p', 'fs-3 fw-bold', formatearPrecioProducto(producto.precio))
     );
 
-    // Se muestran características cuando se agreguen a productos.js.
+    // Características almacenadas en el documento de Firestore.
     if (Array.isArray(producto.caracteristicas) && producto.caracteristicas.length) {
         const lista = crearElementoProducto('ul');
         producto.caracteristicas.forEach(texto => lista.append(crearElementoProducto('li', '', texto)));
@@ -66,12 +73,18 @@ function mostrarDetalleProducto(producto, contenedor) {
     const agregar = crearElementoProducto('button', 'btn btn-robotech mt-3', 'Agregar al carrito');
     agregar.type = 'button';
     agregar.id = 'agregarAlCarrito';
+    const reintentarStock = crearElementoProducto('button', 'btn btn-robotech mt-3', 'Reintentar disponibilidad');
+    reintentarStock.type = 'button';
+    reintentarStock.hidden = true;
     const disponibilidad = crearElementoProducto('p', 'fw-semibold mt-3');
     disponibilidad.setAttribute('aria-live', 'polite');
     function actualizarDisponibilidad() {
         const stock = Carrito.stockDisponible(producto.id);
-        disponibilidad.textContent = describirDisponibilidad(producto, stock);
-        agregar.disabled = stock === 0;
+        const vigente = buscarProductoPorId(producto.id);
+        disponibilidad.textContent = Productos.estado !== 'listo'
+            ? 'Disponibilidad pendiente de verificar.' : describirDisponibilidad(vigente, stock);
+        agregar.disabled = Productos.estado !== 'listo' || stock === 0;
+        reintentarStock.hidden = Productos.estado !== 'error';
     }
     actualizarDisponibilidad();
     document.addEventListener('carrito:actualizado', actualizarDisponibilidad);
@@ -79,26 +92,47 @@ function mostrarDetalleProducto(producto, contenedor) {
     const estado = crearElementoProducto('p', 'mt-3');
     estado.setAttribute('role', 'status');
     estado.setAttribute('aria-live', 'polite');
-    agregar.addEventListener('click', () => {
-        const resultado = Carrito.agregar(producto.id);
+    agregar.addEventListener('click', async () => {
+        agregar.disabled = true;
+        estado.textContent = 'Verificando stock…';
+        const resultado = await Carrito.agregar(producto.id);
+        actualizarDisponibilidad();
         estado.textContent = resultado.ok ? producto.nombre + ' agregado al carrito.' : resultado.mensaje;
     });
-    informacion.append(agregar, estado);
+    reintentarStock.addEventListener('click', async () => {
+        estado.textContent = 'Verificando disponibilidad…';
+        try {
+            await Productos.cargar({ forzar: true });
+            estado.textContent = 'Disponibilidad actualizada.';
+        } catch {
+            estado.textContent = 'No se pudo verificar el stock. Intenta nuevamente.';
+        }
+        actualizarDisponibilidad();
+    });
+    informacion.append(agregar, reintentarStock, estado);
     ficha.append(columnaImagen, informacion);
     contenedor.replaceChildren(ficha);
     document.title = 'Robotech | ' + producto.nombre;
 }
 
-function inicializarProducto() {
+async function inicializarProducto() {
     const contenedor = document.querySelector('#detalleProducto');
     if (!contenedor) return;
     const id = obtenerIdProducto();
-    const producto = buscarProductoPorId(id);
-    if (!producto) {
-        mostrarErrorProducto(contenedor, !id);
-        return;
+    if (!id) { mostrarErrorProducto(contenedor, true); return; }
+    contenedor.replaceChildren(crearElementoProducto('p', '', 'Cargando producto…'));
+    try {
+        const producto = await Productos.obtener(id);
+        if (!producto) { mostrarErrorProducto(contenedor, false); return; }
+        mostrarDetalleProducto(producto, contenedor);
+    } catch {
+        const aviso = crearElementoProducto('p', 'alert alert-warning', 'No se pudo consultar el producto. Revisa tu conexión e intenta nuevamente.');
+        aviso.setAttribute('role', 'alert');
+        const reintentar = crearElementoProducto('button', 'btn btn-robotech', 'Reintentar');
+        reintentar.type = 'button';
+        reintentar.addEventListener('click', inicializarProducto);
+        contenedor.replaceChildren(aviso, reintentar);
     }
-    mostrarDetalleProducto(producto, contenedor);
 }
 
 document.addEventListener('DOMContentLoaded', inicializarProducto);

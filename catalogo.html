@@ -55,17 +55,28 @@
                     <input type="search" id="buscarProducto" class="form-control w-auto flex-grow-1"
                         placeholder="Ej.: Arduino, microbit o sensores" aria-controls="listaProductos">
                     <button type="button" id="btnBuscar" class="btn btn-robotech">Buscar</button>
-                    <label for="ordenProductos" class="visually-hidden">Ordenar por</label>
+                    <button type="button" id="btnLimpiar" class="btn btn-outline-light">Limpiar</button>
+                </div>
+                <div class="d-flex flex-wrap align-items-center gap-3 mt-3">
+                    <label for="categoriaProductos" class="form-label mb-0">Categoría</label>
+                    <select id="categoriaProductos" class="form-select w-auto" aria-controls="listaProductos">
+                        <option value="">Todas las categorías</option>
+                    </select>
+                    <label for="ordenProductos" class="form-label mb-0">Ordenar por</label>
                     <select id="ordenProductos" class="form-select w-auto" aria-controls="listaProductos">
                         <option value="nombre-asc">Nombre: A a Z</option>
                         <option value="nombre-desc">Nombre: Z a A</option>
                         <option value="precio-asc">Precio: menor a mayor</option>
                         <option value="precio-desc">Precio: mayor a menor</option>
                     </select>
-                    <button type="button" id="btnLimpiar" class="btn btn-outline-light">Limpiar</button>
+                    <div class="form-check">
+                        <input id="soloDisponibles" type="checkbox" class="form-check-input" aria-controls="listaProductos">
+                        <label for="soloDisponibles" class="form-check-label">Solo disponibles</label>
+                    </div>
                 </div>
             </form>
             <p id="cantidadResultados" role="status" aria-live="polite" aria-atomic="true"></p>
+            <button id="reintentarProductos" type="button" class="btn btn-robotech mb-3" hidden>Reintentar carga</button>
             <p id="sinResultados" class="alert alert-info" hidden>No encontramos kits para esa búsqueda. Prueba con otro nombre o limpia la búsqueda.</p>
             <div id="listaProductos" class="row g-4"></div>
             <noscript><p>Activa JavaScript para ver los kits y utilizar el buscador.</p></noscript>
