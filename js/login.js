@@ -1,4 +1,7 @@
+// Modal compartido para registro, inicio de sesión y cierre de sesión.
+// La interfaz llama a firebase.js; Authentication valida las credenciales y Firestore guarda el perfil.
 'use strict';
+// Espera a que el HTML esté disponible antes de localizar controles y conectar sus eventos.
 document.addEventListener('DOMContentLoaded', () => {
     const ingresar = document.querySelector('#btnLoginPlaceholder');
     if (!ingresar) return;
@@ -75,11 +78,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const $ = id => modal.querySelector('#' + id);
     let registro = false, ocupado = false, servicio = null, cargando = null, sesion = null, pendiente = null;
     const botones = ['loginIniciar', 'loginGoogle', 'cerrarSesion', 'reintentarPerfil', 'vistaLogin', 'vistaRegistro'];
+    // Evita operaciones simultáneas al deshabilitar botones mientras se completa una petición.
     function bloquear(valor) {
         ocupado = valor;
         botones.forEach(id => $(id).disabled = valor || !servicio);
         $('loginFormulario').setAttribute('aria-busy', String(valor));
     }
+    // Alterna entre registro e inicio de sesión: cambia campos visibles, validaciones y etiquetas, y limpia las contraseñas.
     function vista(valor) {
         registro = valor;
         $('loginTitulo').textContent = registro ? 'Crear cuenta' : 'Iniciar sesión';
@@ -102,6 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
             $(id).className = 'btn flex-fill ' + (activo ? 'btn-robotech' : 'btn-outline-light');
         });
     }
+    // Actualiza el modal y el botón de cabecera según exista una sesión autenticada.
     function mostrarSesion(user) {
         sesion = user;
         $('accesoPanel').hidden = !!user;
@@ -112,6 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
         $('sesionRol').textContent = '';
         if (!user) { pendiente = null; $('reintentarPerfil').hidden = true; }
     }
+    // Importa firebase.js una sola vez y suscribe la interfaz a los cambios de sesión. Comparte la promesa si la carga ya comenzó.
     async function cargar() {
         if (servicio) return;
         if (cargando) return cargando;
@@ -141,6 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
         })();
         return cargando;
     }
+    // Traduce códigos técnicos de Authentication a mensajes comprensibles para el usuario.
     const errores = {
         'auth/invalid-credential': 'El correo o la contraseña no son correctos.',
         'auth/wrong-password': 'El correo o la contraseña no son correctos.',
@@ -158,6 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
         'auth/operation-not-allowed': 'Este método de acceso aún no está habilitado.',
         'auth/account-exists-with-different-credential': 'Utiliza el método de acceso original de esta cuenta.'
     };
+    // Elige Google, registro o acceso con correo; gestiona bloqueos, errores y el posible reintento del perfil sin perder la autenticación.
     async function acceder(google) {
         if (ocupado || !servicio) return;
         bloquear(true);
@@ -179,6 +188,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     $('vistaLogin').addEventListener('click', () => vista(false));
     $('vistaRegistro').addEventListener('click', () => vista(true));
+    // Comprueba que las contraseñas coincidan solo durante el registro; usa la validación nativa del formulario.
     const validarConfirmacion = () => $('registroConfirmar').setCustomValidity(registro && $('registroConfirmar').value !== $('loginClave').value ? 'Las contraseñas no coinciden.' : '');
     $('loginClave').addEventListener('input', validarConfirmacion);
     $('registroConfirmar').addEventListener('input', validarConfirmacion);
@@ -194,6 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
         catch { $('loginEstado').textContent = 'No se pudo cerrar la sesión. Intenta nuevamente.'; }
         finally { bloquear(false); }
     });
+    // Reintenta únicamente el guardado del perfil de una sesión ya autenticada.
     $('reintentarPerfil').addEventListener('click', async () => {
         if (ocupado || !sesion) return;
         bloquear(true); $('loginEstado').textContent = 'Guardando perfil…';
@@ -208,6 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     ingresar.addEventListener('click', () => { bootstrap.Modal.getOrCreateInstance(modal).show(); cargar(); });
     modal.addEventListener('shown.bs.modal', () => (sesion ? $('cerrarSesion') : registro ? $('loginUsuario') : $('loginCorreo')).focus());
+    // Al cerrar, elimina contraseñas de los campos y devuelve el foco al botón de acceso.
     modal.addEventListener('hidden.bs.modal', () => { $('loginClave').value = ''; $('registroConfirmar').value = ''; ingresar.focus(); });
     vista(false);
     cargar();

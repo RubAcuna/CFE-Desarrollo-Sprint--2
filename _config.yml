@@ -1,0 +1,8 @@
+exclude:
+  - scripts
+  - tests
+  - datos
+  - iniciar.ps1
+  - firebase.json
+  - firestore.rules
+  - README.md

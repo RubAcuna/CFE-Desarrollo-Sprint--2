@@ -1,14 +1,18 @@
+// Productos destacados de la página de inicio, obtenidos del mismo catálogo de Firestore.
 'use strict';
+// Espera a que el HTML esté disponible antes de localizar controles y conectar sus eventos.
 document.addEventListener('DOMContentLoaded', () => {
     const lista = document.querySelector('#productosDestacados');
     const estado = document.querySelector('#estadoDestacados');
     const reintentar = document.querySelector('#reintentarDestacados');
+    // Crea los nodos de las tarjetas y asigna sus textos sin interpretar HTML.
     function elemento(tag, clase, texto) {
         const nodo = document.createElement(tag);
         nodo.className = clase;
         if (texto !== undefined) nodo.textContent = texto;
         return nodo;
     }
+    // Gestiona carga, error y catálogo vacío. Muestra hasta cuatro kits, priorizando las referencias preferidas y calculando su disponibilidad local.
     function mostrar() {
         lista.replaceChildren();
         reintentar.hidden = Productos.estado !== 'error';
@@ -40,6 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     reintentar.addEventListener('click', () => Productos.cargar({ forzar: true }).catch(() => {}));
+    // Refresca las tarjetas cuando cambia el carrito o termina una actualización del inventario.
     document.addEventListener('carrito:actualizado', mostrar);
     Productos.cargar().catch(() => {});
     mostrar();

@@ -1,9 +1,11 @@
+// Pruebas de catálogo y carrito con un servicio simulado: no escriben en Firebase real.
 const fs = require('fs'), vm = require('vm'), assert = require('node:assert/strict');
 const root = require('path').resolve(__dirname, '..') + '/';
 const read = p => fs.readFileSync(root + p, 'utf8');
 const seed = JSON.parse(read('datos/productos-iniciales.json'));
 for (const file of ['productos','carrito','catalogo','producto','destacados']) new vm.Script(read('js/' + file + '.js'));
 let servidor = structuredClone(seed), falla = false, guardado = '[]', lecturas = 0, falloGuardar = false;
+// Simula las lecturas del servidor y permite provocar errores de red de forma controlada.
 const servicio = {
   async consultarProductos() { lecturas++; if (falla) throw Error('offline'); return structuredClone(servidor); },
   async consultarProducto(id) { if (falla) throw Error('offline'); return structuredClone(servidor.find(p => p.id === id) || null); }
@@ -11,10 +13,13 @@ const servicio = {
 const eventos = new Map();
 const document = { addEventListener(n, fn) { if (!eventos.has(n)) eventos.set(n, []); eventos.get(n).push(fn); },
   dispatchEvent(e) { (eventos.get(e.type) || []).forEach(fn => fn(e)); }, querySelector() { return null; }, querySelectorAll() { return []; } };
+// Ejecuta los scripts en un contexto aislado con DOM, almacenamiento y servicio simulados.
 const ctx = vm.createContext({ servicioMock: servicio, document, window: { addEventListener() {} }, Event, Intl, URLSearchParams,
   localStorage: { getItem: () => guardado, setItem: (_, valor) => { if (falloGuardar) throw Error(); guardado = valor; } } });
+// Sustituye la importación de Firebase por el servicio de prueba, sin cambiar los archivos de la aplicación.
 vm.runInContext(read('js/productos.js').replaceAll("import('./firebase.js')", 'Promise.resolve(servicioMock)') + '\n' + read('js/carrito.js') + '\n' + read('js/catalogo.js'), ctx);
 const run = s => vm.runInContext(s, ctx);
+// Verifica carga compartida, búsqueda, orden y operaciones del carrito contra distintas respuestas del servidor.
 (async () => {
   await Promise.all([run('Productos.cargar()'), run('Productos.cargar()')]);
   assert.equal(lecturas, 1);
@@ -37,6 +42,7 @@ const run = s => vm.runInContext(s, ctx);
   assert.equal(run('Carrito.stockDisponible("robopro")'), 1);
   assert.equal((await run('Carrito.cambiarCantidad("robopro", 1)')).ok, true);
   assert.equal(run('Carrito.stockDisponible("robopro")'), 2);
+  // Comprueba que los fallos de red o de almacenamiento no borren el carrito previamente guardado.
   const anterior = guardado;
   falla = true;
   assert.equal((await run('Carrito.agregar("robopro")')).ok, false);
@@ -51,8 +57,10 @@ const run = s => vm.runInContext(s, ctx);
   await run('Carrito.eliminar("robopro")');
   assert.equal(run('Carrito.stockDisponible("robopro")'), 3);
   servidor[0].stock = 1;
+  // Dos altas simultáneas con una sola unidad disponible deben producir un único agregado exitoso.
   const concurrentes = await Promise.all([run('Carrito.agregar("robopro")'), run('Carrito.agregar("robopro")')]);
   assert.equal(concurrentes.filter(r => r.ok).length, 1);
+  // Distingue una colección vacía de una respuesta con campos inválidos.
   servidor = [];
   await run('Productos.cargar({forzar:true})');
   assert.equal(run('productos.length'), 0);

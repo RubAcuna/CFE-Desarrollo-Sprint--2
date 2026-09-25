@@ -1,11 +1,15 @@
+// Presentación del catálogo: combina búsqueda, categoría, disponibilidad y orden.
+// Los filtros operan sobre los productos ya consultados; escribir no genera una consulta a Firestore.
 'use strict';
 
 // Permite buscar sin distinguir mayúsculas, tildes ni signos (micro:bit / microbit).
+// Prepara el texto para buscar: elimina tildes y signos y convierte las letras a minúsculas.
 function normalizarTexto(texto) {
     return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
         .toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
 }
 
+// Devuelve los productos cuyo nombre, categoría o descripción contienen todas las palabras de la consulta.
 function filtrarProductos(lista, consulta) {
     const palabras = normalizarTexto(consulta).split(/\s+/).filter(Boolean);
     return lista.filter(producto => {
@@ -15,6 +19,7 @@ function filtrarProductos(lista, consulta) {
 }
 
 // Ordena una copia para conservar el catálogo original.
+// Devuelve una copia ordenada por nombre o precio, ascendente o descendente. Desempata precios por nombre y deja los precios desconocidos al final.
 function ordenarProductos(lista, criterio = 'nombre-asc') {
     const compararNombre = (a, b) => a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base', numeric: true });
     return [...lista].sort((a, b) => {
@@ -32,12 +37,14 @@ function ordenarProductos(lista, criterio = 'nombre-asc') {
     });
 }
 
+// Construye el contador de coincidencias y total del catálogo, ajustando singular y plural.
 function describirResultados(cantidad, total) {
     return cantidad === 1
         ? '1 producto encontrado de ' + total + '.'
         : cantidad + ' productos encontrados de ' + total + '.';
 }
 
+// Espera a que el HTML esté disponible antes de localizar controles y conectar sus eventos.
 document.addEventListener('DOMContentLoaded', () => {
     const contenedor = document.querySelector('#listaProductos');
     const formulario = document.querySelector('#formBusqueda');
@@ -53,6 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const plantilla = document.querySelector('#plantillaProducto');
     const formatoPrecio = new Intl.NumberFormat('es-UY', { maximumFractionDigits: 2 });
 
+    // Clona la plantilla HTML para cada resultado y actualiza tarjetas, contador y aviso de lista vacía.
     function mostrarProductos(lista) {
         const fragmento = document.createDocumentFragment();
         lista.forEach(producto => {
@@ -80,6 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
         sinResultados.textContent = productos.length ? 'No encontramos productos con esos filtros. Prueba otra búsqueda.' : 'No hay productos publicados por el momento.';
     }
 
+    // Gestiona carga y errores; si el catálogo está listo, aplica texto, categoría y disponibilidad, ordena el resultado y lo muestra.
     function buscarProductos() {
         if (Productos.estado !== 'listo') {
             contenedor.replaceChildren();
@@ -116,6 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
         campo.focus();
     });
 
+    // Obtiene categorías únicas del catálogo y reconstruye el selector, conservando la selección cuando sigue existiendo.
     function actualizarCategorias() {
         const anterior = categoria.value;
         categoria.replaceChildren(new Option('Todas las categorías', ''));
@@ -124,6 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if ([...categoria.options].some(opcion => opcion.value === anterior)) categoria.value = anterior;
         buscarProductos();
     }
+    // Los errores ya se representan mediante Productos.estado; estos catch evitan promesas rechazadas sin manejar.
     reintentar.addEventListener('click', () => Productos.cargar({ forzar: true }).catch(() => {}));
     document.addEventListener('productos:actualizados', actualizarCategorias);
     document.addEventListener('carrito:actualizado', buscarProductos);

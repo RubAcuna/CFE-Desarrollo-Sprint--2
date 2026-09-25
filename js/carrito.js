@@ -1,10 +1,15 @@
+// Carrito local: guarda referencias y cantidades, y obtiene precios y stock desde Firestore.
+// Flujo de compra: agregar ->consultar inventario -> validar -> guardar -> actualizar pantalla.
+// El carrito de este navegador no representa una reserva global de inventario.
 'use strict';
 
 // Solo se guardan identificadores y cantidades; los precios y existencias se consultan en Firestore.
 const Carrito = (() => {
     const clave = 'robotech.carrito';
     const limite = 99;
+    // Limita cada kit al menor valor entre su stock disponible y el tope de 99 unidades.
     function maximoProducto(producto) { return Math.min(limite, obtenerStockDisponible(producto)); }
+    // Recupera el carrito de localStorage, une referencias repetidas y filtra o limita cantidades según el inventario en memoria. No escribe en el almacenamiento.
     function leer() {
         try {
             const datos = JSON.parse(localStorage.getItem(clave) || '[]');
@@ -19,20 +24,23 @@ const Carrito = (() => {
             return Array.from(items, ([id, cantidad]) => ({ id, cantidad }));
         } catch { return []; }
     }
-    // Disponibilidad para este navegador: stock de Firestore menos su carrito local.
-    // Esto no reserva inventario global ni modifica el stock en Firestore.
-    // Así la reserva persiste al recargar y se libera al eliminar o reducir cantidades.
+    // Disponibilidad : stock en Firestore .
+    // Esto no  modifica el stock en Firestore. soolo lo haré cuando la compra finalice 
+   
+    // Resta del stock base las unidades de este producto presentes en el carrito del navegador.
     function stockDisponible(id) {
         const producto = productos.find(p => p.id === id);
         const reservadas = leer().find(item => item.id === id)?.cantidad || 0;
         return Math.max(0, obtenerStockDisponible(producto) - reservadas);
     }
+    // Persiste identificadores y cantidades y refresca la interfaz. Devuelve { ok, mensaje } si el navegador impide guardar.
     function guardar(items) {
         try { localStorage.setItem(clave, JSON.stringify(items)); }
-        catch { return { ok: false, mensaje: 'No se pudo guardar el carrito. Habilita el almacenamiento del navegador e intenta nuevamente.' }; }
+        catch { return { ok: false, mensaje: 'No se pudo guardar el carrito. Intenta nuevamente.' }; }
         actualizar();
         return { ok: true };
     }
+    // Con el inventario ya actualizado, valida el producto y el límite acumulado, suma una unidad y muestra el modal si pudo guardarla.
     function agregarValidado(id) {
         const producto = productos.find(p => p.id === id);
         if (!producto) return { ok: false, mensaje: 'Producto no encontrado.' };
@@ -47,6 +55,7 @@ const Carrito = (() => {
         if (resultado.ok) mostrarModal();
         return resultado;
     }
+    // Valida una cantidad entera, el stock y la presencia del producto en el carrito antes de guardar el nuevo valor.
     function cambiarCantidadValidada(id, cantidad) {
         if (!Number.isInteger(cantidad) || cantidad < 1 || cantidad > limite) return { ok: false, mensaje: 'Ingresa una cantidad entera entre 1 y 99.' };
         const producto = productos.find(p => p.id === id);
@@ -59,50 +68,60 @@ const Carrito = (() => {
         return guardar(items.map(item => item.id === id ? { id, cantidad } : item));
     }
     let cola = Promise.resolve();
+    // Ejecuta las modificaciones una detrás de otra para evitar conflictos por clics rápidos. Convierte errores en un resultado que la interfaz puede mostrar.
     function encolar(operacion) {
         const resultado = cola.then(operacion).catch(() => ({ ok: false,
             mensaje: 'No se pudo verificar el inventario. Revisa tu conexión e intenta nuevamente.' }));
         cola = resultado;
         return resultado;
     }
+    // Operación pública asíncrona: consulta inventario fresco antes de validar y agregar una unidad.
     function agregar(id) {
         return encolar(async () => {
             await Productos.cargar({ forzar: true });
             return agregarValidado(id);
         });
     }
+    // Operación pública asíncrona: consulta el stock vigente antes de aceptar la cantidad solicitada.
     function cambiarCantidad(id, cantidad) {
         return encolar(async () => {
             await Productos.cargar({ forzar: true });
             return cambiarCantidadValidada(id, cantidad);
         });
     }
+    // Espera un catálogo válido y elimina la referencia del carrito, liberando su disponibilidad local.
     function eliminar(id) {
         return encolar(async () => {
             await Productos.cargar();
             return guardar(leer().filter(item => item.id !== id));
         });
     }
+    // Encola el guardado de un carrito vacío; no modifica los documentos de productos en Firestore.
     function vaciar() { return encolar(() => guardar([])); }
+    // Crea nodos para la interfaz del carrito e inserta los datos como texto, sin interpretar HTML.
     function elemento(tag, clase, texto) {
         const nodo = document.createElement(tag);
         nodo.className = clase;
         if (texto !== undefined) nodo.textContent = texto;
         return nodo;
     }
+    // Formatea importes con separadores de la configuración regional de Uruguay.
     function precio(valor) {
         return '$ ' + new Intl.NumberFormat('es-UY', { maximumFractionDigits: 2 }).format(valor);
     }
+    // Muestra el mensaje de éxito o error de una operación en el estado accesible de la página del carrito.
     function avisar(resultado, mensaje) {
         const estado = document.querySelector('#estadoCarrito');
         if (estado) estado.textContent = resultado.ok ? mensaje : resultado.mensaje;
     }
+    // Calcula el total usando precios del catálogo y detecta productos cuyo precio falta confirmar.
     function resumen(items) {
         return {
             total: items.reduce((suma, item) => suma + (productos.find(p => p.id === item.id).precio || 0) * item.cantidad, 0),
             pendientes: items.some(item => !Number.isFinite(productos.find(p => p.id === item.id).precio))
         };
     }
+    // Crea una sola ventana de carrito por página y conecta los enlaces de la cabecera para abrirla.
     function crearModal() {
         const modal = elemento('div', 'modal fade robotech-modal');
         modal.id = 'modalCarrito';
@@ -139,6 +158,7 @@ const Carrito = (() => {
         document.querySelector('#reintentarInventarioModal').addEventListener('click', () => Productos.cargar({ forzar: true }).catch(() => {}));
         modal.addEventListener('show.bs.modal', actualizar);
     }
+    // Abre la ventana con Bootstrap y prepara el retorno del foco al control que la abrió.
     function mostrarModal() {
         const modal = document.querySelector('#modalCarrito');
         if (!modal || !window.bootstrap?.Modal) return;
@@ -148,6 +168,7 @@ const Carrito = (() => {
         }, { once: true });
         bootstrap.Modal.getOrCreateInstance(modal).show();
     }
+    // Reconstruye el resumen compacto de productos, cantidades y total dentro del modal.
     function renderizarModal(items) {
         const lista = document.querySelector('#modalCarritoItems');
         if (!lista) return;
@@ -170,6 +191,7 @@ const Carrito = (() => {
         document.querySelector('#modalCarritoTotal').textContent = (pendientes ? 'Subtotal confirmado: ' : 'Total: ') + precio(total) + ' UYU';
         document.querySelector('#modalCarritoPendientes').hidden = !pendientes;
     }
+    // Actualiza el total y habilita la confirmación solo si hay productos con precios conocidos; el checkout es una demostración.
     function actualizarCheckout(items) {
         const seccion = document.querySelector('#finalizarCompra');
         if (!seccion) return;
@@ -182,6 +204,7 @@ const Carrito = (() => {
             : 'Compra de demostración: no se procesarán pagos ni se enviará un pedido.';
         document.querySelector('#estadoCompra').textContent = '';
     }
+    // Construye las filas de carrito.html y conecta los controles de cantidad y eliminación con las operaciones asíncronas.
     function renderizar(items) {
         const lista = document.querySelector('#itemsCarrito');
         if (!lista) return;
@@ -236,6 +259,7 @@ const Carrito = (() => {
         document.querySelector('#totalCarrito').textContent = (pendientes ? 'Subtotal con precio confirmado: ' : 'Total: ') + precio(total);
         document.querySelector('#preciosPendientes').hidden = !pendientes;
     }
+    // Sincroniza contador, filas, modal y checkout. Durante carga o error oculta importes sin verificar, conserva el almacenamiento y emite carrito:actualizado.
     function actualizar() {
         const reintentarModal = document.querySelector('#reintentarInventarioModal');
         if (reintentarModal) reintentarModal.hidden = Productos.estado !== 'error';
@@ -272,6 +296,7 @@ const Carrito = (() => {
         actualizarCheckout(items);
         document.dispatchEvent(new Event('carrito:actualizado'));
     }
+    // Espera a que el HTML esté disponible antes de localizar controles y conectar sus eventos.
     document.addEventListener('DOMContentLoaded', () => {
         crearModal();
         const reintentar = elemento('button', 'btn btn-robotech mb-3', 'Reintentar carga del inventario');
@@ -283,6 +308,7 @@ const Carrito = (() => {
         document.addEventListener('productos:actualizados', actualizar);
         Productos.cargar().catch(() => {});
         actualizar();
+        // Vuelve a consultar el inventario antes de confirmar el resumen de demostración; no cobra ni crea un pedido.
         document.querySelector('#formFinalizarCompra')?.addEventListener('submit', async evento => {
             evento.preventDefault();
             try { await Productos.cargar({ forzar: true }); } catch { return; }
@@ -298,6 +324,7 @@ const Carrito = (() => {
             if (resultado.ok) document.querySelector('#seguirComprando').focus();
         });
     });
+    // Sincroniza otras pestañas del mismo origen cuando cambia el carrito almacenado.
     window.addEventListener('storage', evento => { if (evento.key === clave || evento.key === null) actualizar(); });
     window.addEventListener('pageshow', actualizar);
     return { leer, stockDisponible, agregar, cambiarCantidad, eliminar, vaciar, actualizar };

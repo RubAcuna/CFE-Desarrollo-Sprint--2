@@ -1,0 +1,10 @@
+# Dependencias y registros de ejecución
+node_modules/
+*.log
+# Archivos privados: nunca deben publicarse
+.env
+.env.*
+*service-account*.json
+*firebase-adminsdk*.json
+
+.servidor.json

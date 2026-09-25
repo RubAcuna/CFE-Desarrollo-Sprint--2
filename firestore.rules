@@ -6,6 +6,11 @@ service cloud.firestore {
       allow read: if true;
       allow write: if false;
     }
+    // La autorización depende del documento del usuario autenticado, nunca del formulario.
+    function administrador() {
+      return request.auth != null
+        && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'Administrador';
+    }
     match /usuarios/{uid} {
       function propietario() {
         return request.auth != null && request.auth.uid == uid;
@@ -19,7 +24,20 @@ service cloud.firestore {
           && request.resource.data.proveedor == request.auth.token.firebase.sign_in_provider
           && request.resource.data.ultimoAcceso == request.time;
       }
-      allow get: if propietario();
+      function edicionAdministrativaValida() {
+        return resource.data.uid == uid && request.resource.data.uid == uid
+          && request.resource.data.usuario is string
+          && request.resource.data.usuario.size() > 0
+          && request.resource.data.usuario.size() <= 80
+          && request.resource.data.rol in ['Invitado', 'Estudiante', 'Docente', 'Administrador']
+          && (request.auth.uid != uid || request.resource.data.rol == 'Administrador')
+          && request.resource.data.actualizadoEn == request.time
+          && request.resource.data.actualizadoPor == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usuario', 'rol', 'actualizadoEn', 'actualizadoPor']);
+      }
+      allow get: if propietario() || administrador();
+      allow list: if administrador();
+      allow update: if administrador() && edicionAdministrativaValida();
       allow create: if propietario() && perfilValido()
         && request.resource.data.keys().hasOnly(['uid', 'email', 'usuario', 'proveedor', 'ultimoAcceso', 'rol', 'creadoEn'])
         && request.resource.data.rol in ['Estudiante', 'Docente', 'Invitado']

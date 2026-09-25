@@ -44,32 +44,28 @@
             </div>
         </div>
     </nav>
-    <div class="navbar2">I</div>
-    <main class='flex-grow-1'>
-        <main class='flex-grow-1'>
-            <div class="container py-5">
-                <section class="locked-module">
-                    <div class="locked-icon">🛡️</div>
-                    <span class="badge rounded-pill text-bg-warning mb-3">Sprint 3 · Semanas 9 a 12</span>
-                    <h1>Panel administrativo</h1>
-                    <p class="lead">Solo será visible para administradores autenticados.</p>
-                    <div class="locked-card">
-                        <h2 class="h5">Funcionalidad en desarrollo</h2>
-                        <p>Este módulo forma parte de la arquitectura final, pero su código deberá desarrollarse en el
-                            sprint indicado.</p>
-                        <ul>
-                            <li>Validación de rol</li>
-                            <li>Alta de productos</li>
-                            <li>Edición</li>
-                            <li>Eliminación o baja</li>
-                            <li>Stock y disponibilidad</li>
-                            <li>Consulta de pedidos</li>
-                        </ul>
-                    </div>
-                    <a class="btn btn-primary btn-sm" href="index.html">Volver al inicio</a>
-                </section>
-            </div>
-        </main>
+    <hr class="separador-celeste">
+    <main class="flex-grow-1 py-5"><div class="container">
+      <h1>Administración</h1><p id="entornoAdministracion" class="alert alert-info" role="note"></p><p>Gestiona los usuarios y el catálogo de Robotech.</p>
+      <p id="estadoAdministracion" role="status" aria-live="polite">Comprobando acceso…</p>
+      <button id="accesoAdministracion" type="button" class="btn btn-robotech mb-3" hidden>Iniciar sesión</button>
+      <button id="reintentarAdministracion" type="button" class="btn btn-outline-light mb-3">Actualizar</button>
+      <div id="panelAdministracion" hidden>
+        <div class="nav nav-tabs mb-4" role="tablist" aria-label="Secciones de administración">
+          <button id="tabUsuarios" class="nav-link active" type="button" role="tab" aria-selected="true" aria-controls="adminContenido" data-seccion="usuarios">Usuarios</button>
+          <button id="tabProductos" class="nav-link" type="button" role="tab" aria-selected="false" aria-controls="adminContenido" tabindex="-1" data-seccion="productos">Productos</button>
+        </div>
+        <section id="adminContenido" role="tabpanel" aria-labelledby="tabUsuarios">
+          <div class="d-flex flex-wrap gap-3 align-items-center mb-3"><h2 id="tituloListado" class="h4 mb-0">Usuarios</h2><button id="nuevoRegistro" class="btn btn-robotech" type="button">Nuevo usuario</button></div>
+          <label for="buscarRegistro" class="form-label">Buscar</label><input id="buscarRegistro" type="search" class="form-control mb-3" aria-controls="listaRegistros" placeholder="Nombre, correo, ID o categoría">
+          <div id="grupoFiltroRol" class="mb-3"><label for="filtroRol" class="form-label">Filtrar por rol</label><select id="filtroRol" class="form-select"><option value="">Todos los roles</option><option>Invitado</option><option>Estudiante</option><option>Docente</option><option>Administrador</option></select></div><p id="cantidadRegistros" role="status"></p><div id="listaRegistros" class="d-grid gap-3"></div>
+          <form id="editorRegistro" class="checkout mt-4" hidden><h2 id="tituloEditor" class="h4"></h2><div id="camposEditor" class="row g-3"></div>
+            <div class="d-flex gap-2 mt-3"><button id="guardarRegistro" class="btn btn-robotech" type="submit">Guardar</button><button id="cancelarRegistro" class="btn btn-outline-secondary" type="button">Cancelar</button></div>
+            <p id="estadoEditor" class="mt-3 mb-0" role="status" aria-live="polite"></p>
+          </form>
+        </section>
+      </div><noscript>Activa JavaScript para administrar usuarios y productos.</noscript>
+    </div></main>
     <hr class="separador-celeste">
     <footer class="footer py-5 mt-auto">
         <div class="container">
@@ -109,6 +105,7 @@
     <script src="js/login.js"></script>
     <script src="js/productos.js"></script>
     <script src="js/carrito.js"></script>
+    <script src="js/administracion.js"></script>
 </body>
 
 </html>

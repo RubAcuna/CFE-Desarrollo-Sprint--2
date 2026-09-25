@@ -119,7 +119,7 @@ Cada cuenta guarda el perfil en `usuarios/{uid}`, donde `uid` es el identificado
 
 La contraseña se envía exclusivamente a Firebase Authentication. No se guarda `passwd` en Firestore.
 
-El registro admite Estudiante, Docente e Invitado. Google crea perfiles Invitado. El responsable puede asignar Administrador desde la consola de Firebase en el documento correspondiente al UID; el navegador no puede conceder ese rol. Los roles guardados no conceden por sí solos permisos sobre otros recursos: cada recurso requiere reglas propias.
+El registro admite Estudiante, Docente e Invitado. Google crea perfiles Invitado. El responsable puede asignar Administrador desde la consola de Firebase en el documento correspondiente al UID; el registro público no puede conceder ese rol. Una cuenta Administrador puede asignarlo desde el panel de administración cuando sus reglas estén publicadas. Los roles guardados no conceden por sí solos permisos sobre otros recursos: cada recurso requiere reglas propias.
 
 ## Usuarios anteriores
 
@@ -149,6 +149,21 @@ Inicio, catálogo, ficha y carrito comparten las consultas de `js/productos.js`,
 
 Antes de agregar o cambiar cantidades se consulta nuevamente el inventario del servidor. Las unidades en el carrito reducen la disponibilidad mostrada únicamente en ese navegador; no son una reserva global ni descuentan el inventario de otros clientes. El checkout sigue siendo una demostración. Una compra real requiere transacciones de inventario y pedidos en un backend confiable.
 
-Las reglas permiten leer productos sin iniciar sesión y bloquean escrituras desde clientes web. Los productos se administran desde la consola o con credenciales administrativas. Las reglas de perfiles se mantienen. Para desplegar las reglas con Firebase CLI autenticado: `firebase deploy --only firestore:rules --project robotech-8afa0`.
+Las reglas permiten leer productos sin iniciar sesión y bloquean escrituras desde clientes web. Los productos se administran desde la consola o con credenciales administrativas. Las reglas de perfiles permiten a cada usuario editar su nombre y a los administradores gestionar nombre y rol. Para desplegar las reglas con Firebase CLI autenticado: `firebase deploy --only firestore:rules --project robotech-8afa0`.
 
 Pruebas de integración con servicio simulado: `node tests/firestore.test.cjs`. Cubren consultas, reintentos, catálogo vacío, documento inexistente, búsqueda, orden, stock vigente, errores y operaciones concurrentes. Servir el proyecto por HTTP para probarlo contra Firebase.
+
+
+## Administración con Firebase real
+
+La página usa exclusivamente Authentication y las colecciones usuarios y productos de robotech-8afa0. No hay datos de respaldo ni cuentas de demostración.
+
+Ejecutar iniciar.ps1 para abrir http://127.0.0.1:5000/admin.html. El script usa Firebase en la nube. Para habilitar operaciones administrativas, proporcionar -Credencial con la ruta a una credencial de servidor autorizada, guardada fuera del proyecto. Sin ella la página permite iniciar sesión, pero la API administrativa no se activa ni devuelve usuarios de prueba.
+
+El navegador consulta su propio perfil de Firebase para comprobar el rol Administrador. La API en 127.0.0.1:5050 verifica Authentication y rol en cada operación. Los formularios permiten altas, bajas y modificaciones de productos y cuentas, con validaciones y detección de conflictos. Las cuentas y contraseñas se gestionan con Authentication; los perfiles se guardan en usuarios/{uid}. No se almacena ninguna contraseña en Firestore.
+
+No ejecutar pruebas de escritura contra producción. Las pruebas simuladas siguen disponibles en tests/administracion.test.cjs y tests/firestore.test.cjs.
+
+## Publicación en GitHub Pages
+
+GitHub Pages publica el sitio estático y el catálogo consulta Firestore. La administración requiere el servidor Node de iniciar.ps1, que se ejecuta en el equipo y no en Pages. Para administrarlo remotamente se necesita desplegar el backend en un alojamiento compatible con Node y configurar su URL y orígenes autorizados. No se publican .servidor.json, claves privadas ni dependencias instaladas.

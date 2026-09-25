@@ -1,15 +1,19 @@
+// Ficha individual: usa el id de la URL para consultar y mostrar un producto de Firestore.
 'use strict';
 
 // Ejemplo: producto.html?id=arduino. La URL solo identifica el kit;
-// los datos siempre se consultan en Firestore.
+// los datos se consultan en Firestore.
+// Extrae y limpia el parámetro id de la URL; devuelve null cuando no se indicó un producto.
 function obtenerIdProducto(busqueda = window.location.search) {
     return new URLSearchParams(busqueda).get('id')?.trim() || null;
 }
 
+// Busca una referencia en el arreglo en memoria; esta función no consulta Firestore.
 function buscarProductoPorId(id, lista = productos) {
     return lista.find(producto => producto.id === id) || null;
 }
 
+// Presenta el precio con formato uruguayo o indica que debe consultarse si falta el valor.
 function formatearPrecioProducto(precio) {
     return precio === null || precio === undefined
         ? 'Consultar precio'
@@ -17,6 +21,7 @@ function formatearPrecioProducto(precio) {
 }
 
 // Construye los elementos y asigna el texto sin interpretar HTML de los datos.
+// Crea un nodo con clase y texto. textContent evita interpretar como HTML la información recibida.
 function crearElementoProducto(etiqueta, clase, texto) {
     const elemento = document.createElement(etiqueta);
     if (clase) elemento.className = clase;
@@ -24,6 +29,7 @@ function crearElementoProducto(etiqueta, clase, texto) {
     return elemento;
 }
 
+// Distingue entre URL sin id y producto inexistente, y orienta al usuario hacia el catálogo.
 function mostrarErrorProducto(contenedor, faltaId) {
     const mensaje = crearElementoProducto('section', 'alert alert-info');
     mensaje.append(
@@ -36,6 +42,7 @@ function mostrarErrorProducto(contenedor, faltaId) {
     document.title = 'Robotech | ' + (faltaId ? 'Selecciona un kit' : 'Producto no encontrado');
 }
 
+// Construye la ficha con imágenes, descripción, precio y características; conecta los controles de stock y carrito.
 function mostrarDetalleProducto(producto, contenedor) {
     const ficha = crearElementoProducto('section', 'row g-4 align-items-center');
     ficha.setAttribute('aria-labelledby', 'nombreProducto');
@@ -78,6 +85,7 @@ function mostrarDetalleProducto(producto, contenedor) {
     reintentarStock.hidden = true;
     const disponibilidad = crearElementoProducto('p', 'fw-semibold mt-3');
     disponibilidad.setAttribute('aria-live', 'polite');
+    // Recalcula las unidades restantes y deshabilita la compra si faltan datos verificados o stock; muestra el reintento cuando falla la carga.
     function actualizarDisponibilidad() {
         const stock = Carrito.stockDisponible(producto.id);
         const vigente = buscarProductoPorId(producto.id);
@@ -92,6 +100,7 @@ function mostrarDetalleProducto(producto, contenedor) {
     const estado = crearElementoProducto('p', 'mt-3');
     estado.setAttribute('role', 'status');
     estado.setAttribute('aria-live', 'polite');
+    // Espera la validación remota de Carrito.agregar antes de anunciar éxito.
     agregar.addEventListener('click', async () => {
         agregar.disabled = true;
         estado.textContent = 'Verificando stock…';
@@ -115,6 +124,7 @@ function mostrarDetalleProducto(producto, contenedor) {
     document.title = 'Robotech | ' + producto.nombre;
 }
 
+// Coordina la consulta por id y los estados de carga, producto no encontrado y error con botón de reintento.
 async function inicializarProducto() {
     const contenedor = document.querySelector('#detalleProducto');
     if (!contenedor) return;
@@ -135,4 +145,5 @@ async function inicializarProducto() {
     }
 }
 
+// Espera a que el HTML esté disponible antes de localizar controles y conectar sus eventos.
 document.addEventListener('DOMContentLoaded', inicializarProducto);
