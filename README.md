@@ -159,7 +159,7 @@ Pruebas de integración con servicio simulado: `node tests/firestore.test.cjs`. 
 GitHub Pages sirve los archivos estáticos. El navegador usa Firebase Authentication y consulta directamente las colecciones productos y usuarios de robotech-8afa0 mediante el SDK web. No requiere Node, iniciar.ps1 ni credenciales administrativas privadas.
 
 - js/administracion.js: pestañas y formularios.
-- js/administracion-firestore.js: altas, consultas, modificaciones y bajas con transacciones y detección de cambios simultáneos.
+- js/firebase.js: altas, consultas, modificaciones y bajas con transacciones y detección de cambios simultáneos.
 - firestore.rules: autorización en Firebase por el rol del perfil autenticado; las comprobaciones del navegador no sustituyen estas reglas.
 
 Productos: edición de nombre, descripción, categoría, precio, stock, disponibilidad, imágenes y características.

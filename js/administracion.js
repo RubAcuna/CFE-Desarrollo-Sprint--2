@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const $ = id => document.getElementById(id);
   $('entornoAdministracion').textContent='Firebase en la nube · robotech-8afa0';
   const panel=$('panelAdministracion'), estado=$('estadoAdministracion'), editor=$('editorRegistro');
-  let servicio, operaciones, seccion='usuarios', registros=[], seleccionado=null, administrador=null, version=0, ocupado=false;
+  let servicio, seccion='usuarios', registros=[], seleccionado=null, administrador=null, version=0, ocupado=false;
   const esquemas={
     usuarios:[['usuario','Nombre','text',80],['email','Correo electrónico','email',254],['rol','Rol','select'],['password','Contraseña inicial','password',128],['uid','UID','readonly'],['proveedor','Método de acceso','readonly']],
     productos:[['id','ID (minúsculas, números y guiones)','text',80],['nombre','Nombre','text',150],['descripcion','Descripción','textarea',5000],['categoria','Categoría','text',100],['precio','Precio (UYU)','number'],['stock','Stock','number'],['disponible','Disponible para la venta','checkbox'],['imagenes','Imágenes: URL HTTPS o ruta img/, una por línea','textarea',100000],['caracteristicas','Características, una por línea (opcional)','textarea',100000]]
@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   function limpiar() { registros=[];seleccionado=null;administrador=null;panel.hidden=true;editor.hidden=true;$('camposEditor').replaceChildren();$('listaRegistros').replaceChildren(); }
   // El SDK usa la sesión actual y las reglas de Firestore, sin servidor propio.
-  async function api(method='GET',id='',datos) { return operaciones.administrar(seccion,method,id,datos); }
+  async function api(method='GET',id='',datos) { return servicio.administrar(seccion,method,id,datos); }
   function error(e,destino=estado) {
     destino.textContent=e.code==='permission-denied'?'No tienes permiso para esta operación. Comprueba el rol y las reglas de Firestore.':e.code==='auth/email-already-in-use'?'Ya existe una cuenta con ese correo.':e.message || 'No se pudo completar la operación.';
     if([401,403].includes(e.status)||['admin/sin-sesion','admin/sin-permiso','permission-denied'].includes(e.code)) {limpiar();estado.textContent=destino.textContent;$('accesoAdministracion').hidden=e.code!=='admin/sin-sesion'&&e.status!==401;}
@@ -97,5 +97,5 @@ document.addEventListener('DOMContentLoaded', async () => {
   $('cancelarRegistro').addEventListener('click',()=>{editor.reset();editor.hidden=true;seleccionado=null;$('nuevoRegistro').focus();});
   $('accesoAdministracion').addEventListener('click',()=>$('btnLoginPlaceholder').click());
   $('reintentarAdministracion').addEventListener('click',()=>servicio?cargar():location.reload());
-  try {servicio=await import('./firebase.js');operaciones=await import('./administracion-firestore.js');servicio.observarSesion(()=>{++version;limpiar();cargar();});}catch(e){error(e);}
+  try {servicio=await import('./firebase.js');servicio.observarSesion(()=>{++version;limpiar();cargar();});}catch(e){error(e);}
 });
