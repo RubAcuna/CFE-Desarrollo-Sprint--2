@@ -186,8 +186,3 @@ export async function actualizarUsuarioAdministracion(id, cambios, anterior) {
   return { usuario, rol: cambios.rol };
 }
 
-// Obtiene un token vigente sin exponer credenciales al código de administración.
-export async function tokenAdministracion() {
-  await comprobarAdministrador();
-  return auth().currentUser.getIdToken();
-}

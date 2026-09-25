@@ -50,7 +50,7 @@
       <p id="estadoAdministracion" role="status" aria-live="polite">Comprobando acceso…</p>
       <button id="accesoAdministracion" type="button" class="btn btn-robotech mb-3" hidden>Iniciar sesión</button>
       <button id="reintentarAdministracion" type="button" class="btn btn-outline-light mb-3">Actualizar</button>
-      <div id="panelAdministracion" hidden>
+      <div id="panelAdministracion" hidden><p id="avisoUsuarios" class="alert alert-info">Las altas crean una cuenta de Authentication y su perfil en Firestore. Puedes editar nombre y rol. El correo de cuentas existentes se administra en Authentication. Eliminar un perfil no elimina ni bloquea la cuenta de acceso.</p>
         <div class="nav nav-tabs mb-4" role="tablist" aria-label="Secciones de administración">
           <button id="tabUsuarios" class="nav-link active" type="button" role="tab" aria-selected="true" aria-controls="adminContenido" data-seccion="usuarios">Usuarios</button>
           <button id="tabProductos" class="nav-link" type="button" role="tab" aria-selected="false" aria-controls="adminContenido" tabindex="-1" data-seccion="productos">Productos</button>

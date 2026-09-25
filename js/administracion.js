@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const $ = id => document.getElementById(id);
   $('entornoAdministracion').textContent='Firebase en la nube · robotech-8afa0';
   const panel=$('panelAdministracion'), estado=$('estadoAdministracion'), editor=$('editorRegistro');
-  let servicio, seccion='usuarios', registros=[], seleccionado=null, administrador=null, version=0, ocupado=false;
+  let servicio, operaciones, seccion='usuarios', registros=[], seleccionado=null, administrador=null, version=0, ocupado=false;
   const esquemas={
     usuarios:[['usuario','Nombre','text',80],['email','Correo electrónico','email',254],['rol','Rol','select'],['password','Contraseña inicial','password',128],['uid','UID','readonly'],['proveedor','Método de acceso','readonly']],
     productos:[['id','ID (minúsculas, números y guiones)','text',80],['nombre','Nombre','text',150],['descripcion','Descripción','textarea',5000],['categoria','Categoría','text',100],['precio','Precio (UYU)','number'],['stock','Stock','number'],['disponible','Disponible para la venta','checkbox'],['imagenes','Imágenes: URL HTTPS o ruta img/, una por línea','textarea',100000],['caracteristicas','Características, una por línea (opcional)','textarea',100000]]
@@ -18,20 +18,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     if(!valor) mostrar();
   }
   function limpiar() { registros=[];seleccionado=null;administrador=null;panel.hidden=true;editor.hidden=true;$('camposEditor').replaceChildren();$('listaRegistros').replaceChildren(); }
-  // El servicio local verifica Authentication y rol; no se aceptan credenciales administrativas en el navegador.
-  async function api(method='GET',id='',datos) {
-    if(!['localhost','127.0.0.1','[::1]'].includes(location.hostname)) throw new Error('Para administrar usuarios y productos, abre el proyecto en tu equipo mediante iniciar.ps1. GitHub Pages no ejecuta el servidor administrativo.');
-    const token=await servicio.tokenAdministracion();
-    let response;
-    try { response=await fetch('http://127.0.0.1:5050/api/'+seccion+(id?'/'+encodeURIComponent(id):''),{method,headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},...(datos?{body:JSON.stringify(datos)}:{})}); }
-    catch { throw new Error('Falta iniciar el servicio con una credencial administrativa de robotech-8afa0. No se mostrarán datos locales.'); }
-    const result=await response.json();
-    if(!response.ok) throw Object.assign(new Error(result.error),{status:response.status});
-    return result;
-  }
+  // El SDK usa la sesión actual y las reglas de Firestore, sin servidor propio.
+  async function api(method='GET',id='',datos) { return operaciones.administrar(seccion,method,id,datos); }
   function error(e,destino=estado) {
-    destino.textContent=e.message || 'No se pudo completar la operación.';
-    if([401,403].includes(e.status)||['admin/sin-sesion','admin/sin-permiso'].includes(e.code)) {limpiar();estado.textContent=destino.textContent;$('accesoAdministracion').hidden=e.code!=='admin/sin-sesion'&&e.status!==401;}
+    destino.textContent=e.code==='permission-denied'?'No tienes permiso para esta operación. Comprueba el rol y las reglas de Firestore.':e.code==='auth/email-already-in-use'?'Ya existe una cuenta con ese correo.':e.message || 'No se pudo completar la operación.';
+    if([401,403].includes(e.status)||['admin/sin-sesion','admin/sin-permiso','permission-denied'].includes(e.code)) {limpiar();estado.textContent=destino.textContent;$('accesoAdministracion').hidden=e.code!=='admin/sin-sesion'&&e.status!==401;}
   }
   async function cargar(mensaje='') {
     const actual=++version; editor.hidden=true; seleccionado=null; bloquear(true);
@@ -60,6 +51,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Genera todos los campos del modelo y conserva la revisión para evitar sobrescribir cambios ajenos.
   function abrir(registro=null) {
     seleccionado=registro;editor.reset();$('camposEditor').replaceChildren();$('estadoEditor').textContent='';editor.hidden=false;
+    $('avisoUsuarios').hidden=seccion!=='usuarios';
     $('tituloEditor').textContent=(registro?'Editar ':'Crear ')+(seccion==='usuarios'?'usuario':'producto');
     for(const [key,label,type,max] of esquemas[seccion]) {
       if((key==='password'&&registro)||(type==='readonly'&&!registro))continue;
@@ -69,7 +61,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       if(type==='select')for(const role of ['Invitado','Estudiante','Docente','Administrador']) {const option=crear('option','',role);input.append(option);}
       if(max)input.maxLength=max;
       if(type==='textarea')input.rows=key==='descripcion'?3:4;
-      if(type==='readonly'||(key==='id'&&registro))input.readOnly=true;
+      if(type==='readonly'||(['id','email'].includes(key)&&registro))input.readOnly=true;
       if(key==='rol'&&registro?.id===administrador)input.disabled=true;
       if(type==='number'){input.min='0';input.max='100000000';input.step=key==='stock'?'1':'0.01';}
       if(key==='password'){input.minLength=6;input.autocomplete='new-password';}
@@ -90,13 +82,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     catch(e){if(actual===version){error(e,$('estadoEditor'));bloquear(false);}}
   });
   async function eliminar(registro) {
-    if(ocupado||!confirm(`¿Eliminar ${registro.nombre||registro.usuario}? ${seccion==='usuarios'?'Se eliminarán la cuenta de acceso y su perfil.':'Se quitará del catálogo.'} Esta acción no se puede deshacer.`))return;
+    if(ocupado||!confirm(`¿Eliminar ${registro.nombre||registro.usuario}? ${seccion==='usuarios'?'Se eliminará el perfil de Firestore. La cuenta de Authentication seguirá existiendo; esto no bloquea su acceso y puede volver a crear un perfil Invitado al iniciar sesión.':'Se quitará del catálogo.'} Esta acción no se puede deshacer.`))return;
     const actual=version;bloquear(true);estado.textContent='Eliminando…';
     try {await api('DELETE',registro.id,{revision:registro.revision});if(actual===version)await cargar('Registro eliminado correctamente.');}
     catch(e){if(actual===version){error(e);bloquear(false);}}
   }
   function cambiar(tab) {
-    if(ocupado)return;seccion=tab.dataset.seccion;$('buscarRegistro').value='';$('grupoFiltroRol').hidden=seccion!=='usuarios';
+    if(ocupado)return;seccion=tab.dataset.seccion;$('avisoUsuarios').hidden=seccion!=='usuarios';$('buscarRegistro').value='';$('grupoFiltroRol').hidden=seccion!=='usuarios';
     document.querySelectorAll('[role=tab]').forEach(t=>{const active=t===tab;t.classList.toggle('active',active);t.setAttribute('aria-selected',String(active));t.tabIndex=active?0:-1;});
     $('adminContenido').setAttribute('aria-labelledby',tab.id);$('tituloListado').textContent=seccion==='usuarios'?'Usuarios registrados':'Productos del catálogo';$('nuevoRegistro').textContent=seccion==='usuarios'?'Nuevo usuario':'Nuevo producto';cargar();
   }
@@ -105,5 +97,5 @@ document.addEventListener('DOMContentLoaded', async () => {
   $('cancelarRegistro').addEventListener('click',()=>{editor.reset();editor.hidden=true;seleccionado=null;$('nuevoRegistro').focus();});
   $('accesoAdministracion').addEventListener('click',()=>$('btnLoginPlaceholder').click());
   $('reintentarAdministracion').addEventListener('click',()=>servicio?cargar():location.reload());
-  try {servicio=await import('./firebase.js');servicio.observarSesion(()=>{++version;limpiar();cargar();});}catch(e){error(e);}
+  try {servicio=await import('./firebase.js');operaciones=await import('./administracion-firestore.js');servicio.observarSesion(()=>{++version;limpiar();cargar();});}catch(e){error(e);}
 });

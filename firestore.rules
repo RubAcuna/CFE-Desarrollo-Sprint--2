@@ -4,7 +4,22 @@ service cloud.firestore {
     // Catálogo público; la carga y edición se realizan con permisos administrativos.
     match /productos/{productoId} {
       allow read: if true;
-      allow write: if false;
+      function productoValido() {
+        let p = request.resource.data;
+        return p.keys().hasOnly(['nombre','descripcion','categoria','precio','stock','disponible','imagenes','caracteristicas','actualizadoEn','actualizadoPor'])
+          && p.nombre is string && p.nombre.size() > 0 && p.nombre.size() <= 150
+          && p.descripcion is string && p.descripcion.size() > 0 && p.descripcion.size() <= 5000
+          && p.categoria is string && p.categoria.size() > 0 && p.categoria.size() <= 100
+          && p.precio is number && p.precio >= 0 && p.precio <= 100000000
+          && p.stock is int && p.stock >= 0 && p.stock <= 100000000
+          && p.disponible is bool
+          && p.imagenes is list && p.imagenes.size() > 0 && p.imagenes.size() <= 50
+          && p.caracteristicas is list && p.caracteristicas.size() <= 50
+          && p.actualizadoEn == request.time && p.actualizadoPor == request.auth.uid;
+      }
+      allow create: if administrador() && productoId.matches('[a-z0-9][a-z0-9-]{0,79}') && productoValido();
+      allow update: if administrador() && productoValido();
+      allow delete: if administrador();
     }
     // La autorización depende del documento del usuario autenticado, nunca del formulario.
     function administrador() {
@@ -37,6 +52,17 @@ service cloud.firestore {
       }
       allow get: if propietario() || administrador();
       allow list: if administrador();
+      // Alta desde la sesión del administrador; Authentication asigna el UID.
+      allow create: if administrador()
+        && request.resource.data.keys().hasOnly(['uid','email','usuario','proveedor','ultimoAcceso','rol','creadoEn','actualizadoEn','actualizadoPor'])
+        && request.resource.data.uid == uid
+        && request.resource.data.email is string && request.resource.data.email.size() <= 254
+        && request.resource.data.usuario is string && request.resource.data.usuario.size() > 0 && request.resource.data.usuario.size() <= 80
+        && request.resource.data.rol in ['Invitado','Estudiante','Docente','Administrador']
+        && request.resource.data.proveedor == 'password'
+        && request.resource.data.creadoEn == request.time && request.resource.data.ultimoAcceso == request.time
+        && request.resource.data.actualizadoEn == request.time && request.resource.data.actualizadoPor == request.auth.uid;
+      allow delete: if administrador() && request.auth.uid != uid;
       allow update: if administrador() && edicionAdministrativaValida();
       allow create: if propietario() && perfilValido()
         && request.resource.data.keys().hasOnly(['uid', 'email', 'usuario', 'proveedor', 'ultimoAcceso', 'rol', 'creadoEn'])

@@ -149,21 +149,25 @@ Inicio, catálogo, ficha y carrito comparten las consultas de `js/productos.js`,
 
 Antes de agregar o cambiar cantidades se consulta nuevamente el inventario del servidor. Las unidades en el carrito reducen la disponibilidad mostrada únicamente en ese navegador; no son una reserva global ni descuentan el inventario de otros clientes. El checkout sigue siendo una demostración. Una compra real requiere transacciones de inventario y pedidos en un backend confiable.
 
-Las reglas permiten leer productos sin iniciar sesión y bloquean escrituras desde clientes web. Los productos se administran desde la consola o con credenciales administrativas. Las reglas de perfiles permiten a cada usuario editar su nombre y a los administradores gestionar nombre y rol. Para desplegar las reglas con Firebase CLI autenticado: `firebase deploy --only firestore:rules --project robotech-8afa0`.
+Las reglas permiten consultar el catálogo públicamente y reservan las escrituras de productos y la administración de perfiles a usuarios con rol Administrador.
 
 Pruebas de integración con servicio simulado: `node tests/firestore.test.cjs`. Cubren consultas, reintentos, catálogo vacío, documento inexistente, búsqueda, orden, stock vigente, errores y operaciones concurrentes. Servir el proyecto por HTTP para probarlo contra Firebase.
 
 
-## Administración con Firebase real
+## Administración mediante Firebase SDK
 
-La página usa exclusivamente Authentication y las colecciones usuarios y productos de robotech-8afa0. No hay datos de respaldo ni cuentas de demostración.
+GitHub Pages sirve los archivos estáticos. El navegador usa Firebase Authentication y consulta directamente las colecciones productos y usuarios de robotech-8afa0 mediante el SDK web. No requiere Node, iniciar.ps1 ni credenciales administrativas privadas.
 
-Ejecutar iniciar.ps1 para abrir http://127.0.0.1:5000/admin.html. El script usa Firebase en la nube. Para habilitar operaciones administrativas, proporcionar -Credencial con la ruta a una credencial de servidor autorizada, guardada fuera del proyecto. Sin ella la página permite iniciar sesión, pero la API administrativa no se activa ni devuelve usuarios de prueba.
+- js/administracion.js: pestañas y formularios.
+- js/administracion-firestore.js: altas, consultas, modificaciones y bajas con transacciones y detección de cambios simultáneos.
+- firestore.rules: autorización en Firebase por el rol del perfil autenticado; las comprobaciones del navegador no sustituyen estas reglas.
 
-El navegador consulta su propio perfil de Firebase para comprobar el rol Administrador. La API en 127.0.0.1:5050 verifica Authentication y rol en cada operación. Los formularios permiten altas, bajas y modificaciones de productos y cuentas, con validaciones y detección de conflictos. Las cuentas y contraseñas se gestionan con Authentication; los perfiles se guardan en usuarios/{uid}. No se almacena ninguna contraseña en Firestore.
+Productos: edición de nombre, descripción, categoría, precio, stock, disponibilidad, imágenes y características.
 
-No ejecutar pruebas de escritura contra producción. Las pruebas simuladas siguen disponibles en tests/administracion.test.cjs y tests/firestore.test.cjs.
+Usuarios: las altas crean una cuenta de Authentication mediante una aplicación secundaria con sesión en memoria, conservando la sesión del administrador, y guardan usuarios/{uid}. Si falla el perfil se intenta retirar la cuenta recién creada. Se editan nombre y rol; correo y operaciones sobre cuentas existentes se gestionan en la consola Authentication.
 
-## Publicación en GitHub Pages
+Eliminar un perfil solo elimina el documento de Firestore: no elimina ni bloquea la cuenta de Authentication. Al volver a iniciar sesión puede regenerarse como Invitado. La interfaz advierte esta diferencia. El administrador no puede borrar su propio perfil ni quitarse su rol.
 
-GitHub Pages publica el sitio estático y el catálogo consulta Firestore. La administración requiere el servidor Node de iniciar.ps1, que se ejecuta en el equipo y no en Pages. Para administrarlo remotamente se necesita desplegar el backend en un alojamiento compatible con Node y configurar su URL y orígenes autorizados. No se publican .servidor.json, claves privadas ni dependencias instaladas.
+Publicar firestore.rules en Firebase antes de usar esta versión. El dominio rubacuna.github.io debe estar autorizado en Authentication. No subir claves privadas al repositorio.
+
+Pruebas simuladas: node tests/administracion.test.cjs, node tests/administracion-sdk.test.cjs y node tests/firestore.test.cjs. No modifican datos de producción.
