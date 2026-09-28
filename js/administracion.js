@@ -2,7 +2,6 @@
 'use strict';
 document.addEventListener('DOMContentLoaded', async () => {
   const $ = id => document.getElementById(id);
-  $('entornoAdministracion').textContent='Firebase en la nube · robotech-8afa0';
   const panel=$('panelAdministracion'), estado=$('estadoAdministracion'), editor=$('editorRegistro');
   let servicio, seccion='usuarios', registros=[], seleccionado=null, administrador=null, version=0, ocupado=false;
   const esquemas={
@@ -13,7 +12,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const normalizar=s=>String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
   function bloquear(valor) {
     ocupado=valor;
-    document.querySelectorAll('#panelAdministracion button, #reintentarAdministracion').forEach(b=>b.disabled=valor);
+    document.querySelectorAll('#panelAdministracion button').forEach(b=>b.disabled=valor);
     editor.querySelectorAll('input,textarea,select').forEach(e=>e.disabled=valor || (e.id==='campo_rol' && seleccionado?.id===administrador));
     if(!valor) mostrar();
   }
@@ -51,7 +50,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Genera todos los campos del modelo y conserva la revisión para evitar sobrescribir cambios ajenos.
   function abrir(registro=null) {
     seleccionado=registro;editor.reset();$('camposEditor').replaceChildren();$('estadoEditor').textContent='';editor.hidden=false;
-    $('avisoUsuarios').hidden=seccion!=='usuarios';
+    
     $('tituloEditor').textContent=(registro?'Editar ':'Crear ')+(seccion==='usuarios'?'usuario':'producto');
     for(const [key,label,type,max] of esquemas[seccion]) {
       if((key==='password'&&registro)||(type==='readonly'&&!registro))continue;
@@ -88,7 +87,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     catch(e){if(actual===version){error(e);bloquear(false);}}
   }
   function cambiar(tab) {
-    if(ocupado)return;seccion=tab.dataset.seccion;$('avisoUsuarios').hidden=seccion!=='usuarios';$('buscarRegistro').value='';$('grupoFiltroRol').hidden=seccion!=='usuarios';
+    if(ocupado)return;seccion=tab.dataset.seccion;$('buscarRegistro').value='';$('grupoFiltroRol').hidden=seccion!=='usuarios';
     document.querySelectorAll('[role=tab]').forEach(t=>{const active=t===tab;t.classList.toggle('active',active);t.setAttribute('aria-selected',String(active));t.tabIndex=active?0:-1;});
     $('adminContenido').setAttribute('aria-labelledby',tab.id);$('tituloListado').textContent=seccion==='usuarios'?'Usuarios registrados':'Productos del catálogo';$('nuevoRegistro').textContent=seccion==='usuarios'?'Nuevo usuario':'Nuevo producto';cargar();
   }
@@ -96,6 +95,5 @@ document.addEventListener('DOMContentLoaded', async () => {
   $('buscarRegistro').addEventListener('input',mostrar);$('filtroRol').addEventListener('change',mostrar);$('nuevoRegistro').addEventListener('click',()=>abrir());
   $('cancelarRegistro').addEventListener('click',()=>{editor.reset();editor.hidden=true;seleccionado=null;$('nuevoRegistro').focus();});
   $('accesoAdministracion').addEventListener('click',()=>$('btnLoginPlaceholder').click());
-  $('reintentarAdministracion').addEventListener('click',()=>servicio?cargar():location.reload());
   try {servicio=await import('./firebase.js');servicio.observarSesion(()=>{++version;limpiar();cargar();});}catch(e){error(e);}
 });
