@@ -118,8 +118,34 @@ service cloud.firestore {
       }
       allow create: if compraValida();
       allow get: if request.auth != null && (resource.data.usuarioId == request.auth.uid || administrador());
-      allow list: if request.auth != null && administrador();
+      // La consulta del cliente incluye where('usuarioId', '==', request.auth.uid).
+      allow list: if request.auth != null && (administrador() || resource.data.usuarioId == request.auth.uid);
       allow update, delete: if false;
+    }
+    // Reseñas públicas; existe como máximo un documento por usuario y producto.
+    match /comentarios/{comentarioId} {
+      function comentarioBaseValido() {
+        let c = request.resource.data;
+        let perfil = get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data;
+        return request.auth != null
+          && c.keys().hasOnly(['id','productoId','usuarioId','usuarioNombre','calificacion','texto','creadoEn','actualizadoEn'])
+          && c.id == comentarioId && c.usuarioId == request.auth.uid
+          && comentarioId == c.productoId + '_' + request.auth.uid
+          && c.productoId is string && c.productoId.matches('[a-z0-9][a-z0-9-]{0,79}')
+          && exists(/databases/$(database)/documents/productos/$(c.productoId))
+          && c.usuarioNombre is string && c.usuarioNombre == perfil.usuario
+          && c.usuarioNombre.size() > 0 && c.usuarioNombre.size() <= 80
+          && c.calificacion is int && c.calificacion >= 1 && c.calificacion <= 5
+          && c.texto is string && c.texto.size() >= 3 && c.texto.size() <= 1000
+          && c.actualizadoEn == request.time;
+      }
+      allow read: if true;
+      allow create: if comentarioBaseValido() && request.resource.data.creadoEn == request.time;
+      allow update: if resource.data.usuarioId == request.auth.uid
+        && comentarioBaseValido()
+        && request.resource.data.creadoEn == resource.data.creadoEn
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usuarioNombre','calificacion','texto','actualizadoEn']);
+      allow delete: if request.auth != null && resource.data.usuarioId == request.auth.uid;
     }
   }
 }

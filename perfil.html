@@ -46,7 +46,7 @@
     </nav>
     <hr class="separador-celeste">
     <main class="flex-grow-1 py-5">
-        <div class="container" style="max-width: 760px">
+        <div class="container" style="max-width: 960px">
             <h1>Perfil</h1>
             <p id="perfilEstado" role="status" aria-live="polite">Cargando perfil…</p>
             <section id="perfilSinSesion" class="checkout" hidden>
@@ -71,6 +71,17 @@
                 <button id="perfilGuardar" class="btn btn-robotech" type="submit">Guardar cambios</button>
             </form>
             <button id="perfilRecargar" class="btn btn-outline-light mt-3" type="button" hidden>Volver a cargar perfil</button>
+            <section id="misProductos" class="mt-5" aria-labelledby="misProductosTitulo" hidden>
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
+                    <div>
+                        <p class="eyebrow mb-1">Historial de compras</p>
+                        <h2 id="misProductosTitulo" class="mb-0">Mis productos</h2>
+                    </div>
+                    <button id="recargarMisProductos" class="btn btn-outline-light" type="button">Actualizar</button>
+                </div>
+                <p id="misProductosEstado" role="status" aria-live="polite"></p>
+                <div id="misProductosLista" class="d-grid gap-3"></div>
+            </section>
         </div>
     </main>
     <hr class="separador-celeste">

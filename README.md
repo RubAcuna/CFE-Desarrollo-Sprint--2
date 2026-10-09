@@ -184,3 +184,9 @@ Los archivos JavaScript se organizan así:
 - `js/login.js` registra usuarios con correo y contraseña o Google y mantiene el perfil en `usuarios/{uid}`.
 
 La confirmación crea `compras/{id}` con fecha y hora del servidor, usuario, productos, total, pago, facturación y envío. En la misma transacción vuelve a leer cada producto, valida la cantidad y descuenta el stock. Si falta inventario, cambia la sesión o falla una escritura, Firestore revierte toda la operación. Al llegar a cero actualiza `disponible` a `false`. Las reglas permiten crear compras propias y bloquean modificaciones posteriores.
+
+## Mis productos y reseñas
+
+La pantalla `perfil.html` consulta `compras` con el UID autenticado y agrupa los productos confirmados para mostrar cantidades, número de pedidos y fecha de la compra más reciente. Las reglas exigen que la consulta incluya el UID, de modo que un usuario no puede recuperar pedidos ajenos.
+
+En `producto.html`, `js/comentarios.js` muestra las reseñas públicas y permite que una persona autenticada publique, actualice o elimine su propia reseña. Los documentos se guardan en `comentarios/{productoId}_{uid}` con producto, UID, nombre tomado del perfil, calificación, texto y fechas del servidor. Las reglas impiden suplantar el autor, comentar productos inexistentes o modificar la reseña de otra cuenta.
