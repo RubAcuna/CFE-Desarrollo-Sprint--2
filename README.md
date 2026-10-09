@@ -131,6 +131,16 @@ Abrir el sitio con Live Server usando localhost (no mediante file://). Correo/co
 
 Las pruebas de interfaz y del servicio con SDK simulado validan registro, roles, manejo de errores y separación de perfiles. La prueba completa con una cuenta real debe realizarla el titular de la cuenta.
 
+## Usuarios  en Firestore
+Admin: rubenadmin@robotech.com
+passwd: ruben1234
+
+Los demas roles 
+Estudiante y docente se gestionan desde el  registro
+el usuario invitado es únicamente quen inicia sesion con botón Google
+
+
+
 
 
 ## Catálogo en Firestore
