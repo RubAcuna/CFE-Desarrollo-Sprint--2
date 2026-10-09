@@ -2,7 +2,7 @@
 // Las pantallas importan este módulo para consultar datos o gestionar la sesión.
 import { initializeApp, getApps, getApp, deleteApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut, deleteUser, inMemoryPersistence, setPersistence } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
-import { getFirestore, collection, getDocsFromServer, getDocFromServer, doc, getDoc, updateDoc, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+import { getFirestore, collection, getDocsFromServer, getDocFromServer, doc, getDoc, updateDoc, deleteDoc, query, where, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 const firebaseConfig = {
     apiKey: "AIzaSyBBaLxBzpPxl6IES1x8gDbW9JDGHGLQGGk",
     authDomain: "robotech-8afa0.firebaseapp.com",
@@ -172,6 +172,68 @@ export async function confirmarCompra(items, envio, medioPago) {
     transaction.set(compraRef, compra);
     return { id: compraRef.id, total, medioPago };
   });
+}
+
+// Obtiene exclusivamente las compras del usuario autenticado. El filtro por UID también
+// permite que las reglas de Firestore demuestren que ningún pedido ajeno será devuelto.
+export async function consultarComprasUsuario() {
+  const user = auth().currentUser;
+  if (!user) throw Object.assign(new Error('Debes iniciar sesión para consultar tus productos.'), { code: 'compras/sin-sesion' });
+  const consulta = query(collection(getFirestore(app), 'compras'), where('usuarioId', '==', user.uid));
+  const snapshot = await getDocsFromServer(consulta);
+  return snapshot.docs.map(documento => ({ ...documento.data(), id: documento.id }))
+    .sort((a, b) => (b.fecha?.toMillis?.() || 0) - (a.fecha?.toMillis?.() || 0));
+}
+
+// Devuelve las reseñas públicas de un producto. Se ordenan en el navegador para evitar
+// exigir un índice compuesto adicional en Firestore.
+export async function consultarComentariosProducto(productoId) {
+  if (!app || typeof productoId !== 'string' || !productoId.trim() || productoId.includes('/')) throw new Error('Producto no válido.');
+  const consulta = query(collection(getFirestore(app), 'comentarios'), where('productoId', '==', productoId.trim()));
+  const snapshot = await getDocsFromServer(consulta);
+  return snapshot.docs.map(documento => ({ ...documento.data(), id: documento.id }))
+    .sort((a, b) => (b.actualizadoEn?.toMillis?.() || 0) - (a.actualizadoEn?.toMillis?.() || 0));
+}
+
+// Crea o actualiza una única reseña por usuario y producto. El nombre visible procede
+// del perfil protegido del usuario; nunca se acepta un autor escrito desde el formulario.
+export async function guardarComentarioProducto(productoId, textoComentario, calificacion) {
+  const user = auth().currentUser;
+  const idProducto = typeof productoId === 'string' ? productoId.trim() : '';
+  const texto = typeof textoComentario === 'string' ? textoComentario.trim() : '';
+  const estrellas = Number(calificacion);
+  if (!user) throw Object.assign(new Error('Debes iniciar sesión para escribir una reseña.'), { code: 'comentarios/sin-sesion' });
+  if (!idProducto || idProducto.includes('/') || texto.length < 3 || texto.length > 1000 || !Number.isInteger(estrellas) || estrellas < 1 || estrellas > 5) {
+    throw Object.assign(new Error('Revisa el comentario y la calificación.'), { code: 'comentarios/datos-invalidos' });
+  }
+  const db = getFirestore(app), perfilRef = doc(db, 'usuarios', user.uid);
+  const productoRef = doc(db, 'productos', idProducto), comentarioRef = doc(db, 'comentarios', `${idProducto}_${user.uid}`);
+  return runTransaction(db, async transaction => {
+    const [perfilSnapshot, productoSnapshot, comentarioSnapshot] = await Promise.all([
+      transaction.get(perfilRef), transaction.get(productoRef), transaction.get(comentarioRef)
+    ]);
+    if (!perfilSnapshot.exists()) throw Object.assign(new Error('No se encontró tu perfil.'), { code: 'comentarios/sin-perfil' });
+    if (!productoSnapshot.exists()) throw Object.assign(new Error('El producto ya no existe.'), { code: 'comentarios/producto-inexistente' });
+    const perfil = perfilSnapshot.data(), autor = String(perfil.usuario || perfil.Usuario || '').trim();
+    if (!autor) throw Object.assign(new Error('Tu perfil no tiene un nombre válido.'), { code: 'comentarios/sin-perfil' });
+    const datos = {
+      id: comentarioRef.id, productoId: idProducto, usuarioId: user.uid, usuarioNombre: autor,
+      calificacion: estrellas, texto, actualizadoEn: serverTimestamp()
+    };
+    if (!comentarioSnapshot.exists()) datos.creadoEn = serverTimestamp();
+    else datos.creadoEn = comentarioSnapshot.data().creadoEn;
+    transaction.set(comentarioRef, datos);
+    return { ...datos, id: comentarioRef.id };
+  });
+}
+
+// Elimina la reseña propia; las reglas comprueban nuevamente el UID del propietario.
+export async function eliminarComentarioProducto(productoId) {
+  const user = auth().currentUser;
+  const idProducto = typeof productoId === 'string' ? productoId.trim() : '';
+  if (!user) throw Object.assign(new Error('Debes iniciar sesión.'), { code: 'comentarios/sin-sesion' });
+  if (!idProducto || idProducto.includes('/')) throw new Error('Producto no válido.');
+  await deleteDoc(doc(getFirestore(app), 'comentarios', `${idProducto}_${user.uid}`));
 }
 
 // Administración: el permiso se verifica con el perfil del servidor y con las reglas.
