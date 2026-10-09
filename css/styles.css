@@ -876,3 +876,21 @@ article:hover {
     border-radius: 12px;
 }
 .admin-usuario-datos { flex: 1 1 240px; min-width: 0; overflow-wrap: anywhere; }
+
+/* Productos comprados y reseñas vinculadas a la sesión de Firebase. */
+.producto-comprado,
+.comentario-tarjeta {
+    padding: 1.25rem;
+    color: var(--ink);
+    background: #fff;
+    border: 1px solid #dce2ef;
+    border-left: 5px solid #00bde7;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px #17203312;
+}
+.producto-comprado { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+.producto-comprado-datos { flex: 1 1 280px; min-width: 0; }
+.comentarios-panel { padding-top: 1rem; }
+.comentario-cabecera { display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: .75rem; }
+.comentario-estrellas { color: #9a6400; font-size: 1.1rem; letter-spacing: .08em; }
+.comentario-texto { white-space: pre-wrap; overflow-wrap: anywhere; }
