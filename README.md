@@ -147,7 +147,7 @@ La carga inicial de nueve kits está documentada en `datos/productos-iniciales.j
 
 Inicio, catálogo, ficha y carrito comparten las consultas de `js/productos.js`, a través de `js/firebase.js`. La búsqueda, los filtros por categoría y disponibilidad y los cuatro órdenes se aplican a los productos recuperados. Las consultas fallidas muestran un aviso y permiten reintentar.
 
-Antes de agregar o cambiar cantidades se consulta nuevamente el inventario del servidor. Las unidades en el carrito reducen la disponibilidad mostrada únicamente en ese navegador; no son una reserva global ni descuentan el inventario de otros clientes. El checkout sigue siendo una demostración. Una compra real requiere transacciones de inventario y pedidos en un backend confiable.
+Antes de agregar o cambiar cantidades se consulta nuevamente el inventario del servidor. Las unidades del carrito no reservan inventario: el descuento definitivo se realiza al confirmar la compra mediante una transacción de Firestore.
 
 Las reglas permiten consultar el catálogo públicamente y reservan las escrituras de productos y la administración de perfiles a usuarios con rol Administrador.
 
@@ -171,3 +171,16 @@ Eliminar un perfil solo elimina el documento de Firestore: no elimina ni bloquea
 Publicar firestore.rules en Firebase antes de usar esta versión. El dominio rubacuna.github.io debe estar autorizado en Authentication. No subir claves privadas al repositorio.
 
 Pruebas simuladas: node tests/administracion.test.cjs, node tests/administracion-sdk.test.cjs y node tests/firestore.test.cjs. No modifican datos de producción.
+
+## Compra y checkout
+
+`finalizar-compra.html` presenta el resumen de productos, los datos de facturación y envío y los medios de pago eBROU y Mercado Pago. Solo un usuario autenticado puede confirmar. La selección del medio de pago queda registrada, pero el sitio no ejecuta un cobro externo.
+
+Los archivos JavaScript se organizan así:
+
+- `js/carrito.js` conserva localmente identificadores y cantidades, y dirige al checkout.
+- `js/finalizar-compra.js` controla el formulario, la sesión y la confirmación visual.
+- `js/firebase.js` centraliza Authentication, consultas de Firestore y la transacción de compra.
+- `js/login.js` registra usuarios con correo y contraseña o Google y mantiene el perfil en `usuarios/{uid}`.
+
+La confirmación crea `compras/{id}` con fecha y hora del servidor, usuario, productos, total, pago, facturación y envío. En la misma transacción vuelve a leer cada producto, valida la cantidad y descuenta el stock. Si falta inventario, cambia la sesión o falla una escritura, Firestore revierte toda la operación. Al llegar a cero actualiza `disponible` a `false`. Las reglas permiten crear compras propias y bloquean modificaciones posteriores.

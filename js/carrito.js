@@ -191,18 +191,20 @@ const Carrito = (() => {
         document.querySelector('#modalCarritoTotal').textContent = (pendientes ? 'Subtotal confirmado: ' : 'Total: ') + precio(total) + ' UYU';
         document.querySelector('#modalCarritoPendientes').hidden = !pendientes;
     }
-    // Actualiza el total y habilita la confirmación solo si hay productos con precios conocidos; el checkout es una demostración.
+    // Actualiza el total y habilita el enlace al checkout solo si todos los precios están confirmados.
     function actualizarCheckout(items) {
         const seccion = document.querySelector('#finalizarCompra');
         if (!seccion) return;
         const { total, pendientes } = resumen(items);
         seccion.hidden = !items.length;
         document.querySelector('#totalCheckout').textContent = (pendientes ? 'Subtotal confirmado: ' : 'Total a pagar: ') + precio(total) + ' UYU';
-        document.querySelector('#btnFinalizarCompra').disabled = !items.length || pendientes;
+        const boton = document.querySelector('#btnFinalizarCompra');
+        boton.classList.toggle('disabled', !items.length || pendientes);
+        boton.setAttribute('aria-disabled', String(!items.length || pendientes));
+        boton.tabIndex = pendientes ? -1 : 0;
         document.querySelector('#ayudaCheckout').textContent = pendientes
             ? 'Para finalizar la compra, primero deben confirmarse los precios de todos los kits.'
-            : 'Compra de demostración: no se procesarán pagos ni se enviará un pedido.';
-        document.querySelector('#estadoCompra').textContent = '';
+            : 'Inicia sesión y completa los datos de facturación, pago y envío.';
     }
     // Construye las filas de carrito.html y conecta los controles de cantidad y eliminación con las operaciones asíncronas.
     function renderizar(items) {
@@ -308,16 +310,6 @@ const Carrito = (() => {
         document.addEventListener('productos:actualizados', actualizar);
         Productos.cargar().catch(() => {});
         actualizar();
-        // Vuelve a consultar el inventario antes de confirmar el resumen de demostración; no cobra ni crea un pedido.
-        document.querySelector('#formFinalizarCompra')?.addEventListener('submit', async evento => {
-            evento.preventDefault();
-            try { await Productos.cargar({ forzar: true }); } catch { return; }
-            const items = leer();
-            const { total, pendientes } = resumen(items);
-            actualizar();
-            if (!items.length || pendientes) return;
-            document.querySelector('#estadoCompra').textContent = 'Resumen confirmado: ' + precio(total) + ' UYU con eBROU. Esta es una demostración; no se realizó ningún pago ni se envió un pedido. Tus productos permanecen en el carrito.';
-        });
         document.querySelector('#vaciarCarrito')?.addEventListener('click', async () => {
             const resultado = await vaciar();
             avisar(resultado, 'Carrito vaciado.');

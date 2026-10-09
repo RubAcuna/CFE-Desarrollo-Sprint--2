@@ -833,6 +833,12 @@ article:hover {
 .checkout { padding: clamp(1.25rem, 4vw, 2rem); background: #fff; border: 1px solid #dce2ef; border-top: 4px solid #ec0aa6; border-radius: 12px; }
 .checkout-metodo { display: flex; align-items: center; gap: 1rem; padding: 1.25rem; border: 2px solid #1f4fd6; border-radius: 10px; background: #f5f7fb; cursor: pointer; }
 .checkout-metodo .form-check-input { flex-shrink: 0; margin: 0; }
+.checkout-pagos { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; }
+.checkout-metodo:has(.form-check-input:checked) { border-color: #ec0aa6; box-shadow: 0 0 0 3px #ec0aa622; }
+.checkout-metodo img { object-fit: contain; flex-shrink: 0; }
+.checkout-pago-icono { display: grid; place-items: center; flex: 0 0 56px; height: 56px; color: #fff; background: #009ee3; border-radius: 50%; font-weight: 800; }
+.checkout-producto { display: flex; justify-content: space-between; gap: 1rem; padding: .8rem 0; border-bottom: 1px solid #dce2ef; }
+.checkout-contenedor { max-width: 960px; }
 .checkout .btn:disabled { opacity: .55; }
 .carrito-modal-item { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; padding: 1rem; border: 1px solid #657087; border-radius: 12px; background: #14213d; }
 .carrito-modal-imagen { width: 64px; height: 64px; object-fit: contain; background: #fff; border-radius: 8px; }

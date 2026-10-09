@@ -58,22 +58,11 @@
                 <button id="vaciarCarrito" type="button" class="btn btn-robotech">Vaciar carrito</button>
             </section>
             <section id="finalizarCompra" class="checkout mt-4" aria-labelledby="tituloCheckout" hidden>
-                <p class="eyebrow">Último paso</p>
+                <p class="eyebrow">Siguiente paso</p>
                 <h2 id="tituloCheckout" class="h3">Finalizar compra</h2>
-                <form id="formFinalizarCompra">
-                    <fieldset class="mb-4">
-                        <legend class="h5">Método de pago</legend>
-                        <label class="checkout-metodo" for="pagoEbrou">
-                            <input id="pagoEbrou" class="form-check-input" type="radio" name="metodoPago" value="ebrou" checked required>
-                            <img src="img/br.png" alt="" width="64" height="64" class="object-fit-contain flex-shrink-0">
-                            <span><strong>eBROU</strong><span class="d-block small">Transferencia bancaria · Banco República</span></span>
-                        </label>
-                    </fieldset>
-                    <p id="totalCheckout" class="fs-4 fw-bold"></p>
-                    <p id="ayudaCheckout" class="small">Compra de demostración: no se procesarán pagos ni se enviará un pedido.</p>
-                    <button id="btnFinalizarCompra" class="btn btn-robotech btn-lg" type="submit" aria-describedby="ayudaCheckout">Finalizar compra</button>
-                    <p id="estadoCompra" class="mt-3 mb-0" role="status" aria-live="polite"></p>
-                </form>
+                <p id="totalCheckout" class="fs-4 fw-bold"></p>
+                <p id="ayudaCheckout" class="small">Inicia sesión y completa los datos de facturación, pago y envío.</p>
+                <a id="btnFinalizarCompra" class="btn btn-robotech btn-lg" href="finalizar-compra.html" aria-describedby="ayudaCheckout">Continuar al pago</a>
             </section>
             <noscript>Activa JavaScript para utilizar el carrito.</noscript>
         </div>

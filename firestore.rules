@@ -6,7 +6,7 @@ service cloud.firestore {
       allow read: if true;
       function productoValido() {
         let p = request.resource.data;
-        return p.keys().hasOnly(['nombre','descripcion','categoria','precio','stock','disponible','imagenes','caracteristicas','actualizadoEn','actualizadoPor'])
+        return p.keys().hasOnly(['nombre','descripcion','categoria','precio','stock','disponible','imagenes','caracteristicas','actualizadoEn','actualizadoPor','ultimaCompraId'])
           && p.nombre is string && p.nombre.size() > 0 && p.nombre.size() <= 150
           && p.descripcion is string && p.descripcion.size() > 0 && p.descripcion.size() <= 5000
           && p.categoria is string && p.categoria.size() > 0 && p.categoria.size() <= 100
@@ -15,10 +15,31 @@ service cloud.firestore {
           && p.disponible is bool
           && p.imagenes is list && p.imagenes.size() > 0 && p.imagenes.size() <= 50
           && p.caracteristicas is list && p.caracteristicas.size() <= 50
+          && (!p.keys().hasAny(['ultimaCompraId']) || p.ultimaCompraId is string)
           && p.actualizadoEn == request.time && p.actualizadoPor == request.auth.uid;
       }
+      function descuentoPorCompraValido() {
+        let compra = getAfter(/databases/$(database)/documents/compras/$(request.resource.data.ultimaCompraId)).data;
+        let item = compra.productos[productoId];
+        return request.auth != null
+          && request.resource.data.ultimaCompraId is string
+          && compra.id == request.resource.data.ultimaCompraId
+          && compra.usuarioId == request.auth.uid
+          && compra.fecha == request.time
+          && compra.estado == 'confirmada'
+          && compra.productos.keys().hasAny([productoId])
+          && item.id == productoId && item.cantidad is int && item.cantidad > 0 && item.cantidad <= 99
+          && item.precio == resource.data.precio
+          && item.subtotal == item.precio * item.cantidad
+          && request.resource.data.stock == resource.data.stock - item.cantidad
+          && request.resource.data.stock >= 0
+          && request.resource.data.disponible == (request.resource.data.stock > 0)
+          && request.resource.data.actualizadoEn == request.time
+          && request.resource.data.actualizadoPor == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stock','disponible','ultimaCompraId','actualizadoEn','actualizadoPor']);
+      }
       allow create: if administrador() && productoId.matches('[a-z0-9][a-z0-9-]{0,79}') && productoValido();
-      allow update: if administrador() && productoValido();
+      allow update: if (administrador() && productoValido()) || descuentoPorCompraValido();
       allow delete: if administrador();
     }
     // La autorización depende del documento del usuario autenticado, nunca del formulario.
@@ -70,6 +91,35 @@ service cloud.firestore {
         && request.resource.data.creadoEn == request.time;
       allow update: if propietario() && perfilValido()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['uid', 'email', 'usuario', 'proveedor', 'ultimoAcceso']);
+    }
+    // Cada compra pertenece al usuario autenticado y se crea junto con el descuento de stock.
+    match /compras/{compraId} {
+      function compraValida() {
+        let c = request.resource.data;
+        return request.auth != null
+          && c.keys().hasOnly(['id','usuarioId','usuarioEmail','fecha','estado','moneda','medioPago','productos','total','facturacion','datosEnvio'])
+          && c.id == compraId && c.usuarioId == request.auth.uid
+          && c.usuarioEmail == request.auth.token.email
+          && c.fecha == request.time && c.estado == 'confirmada' && c.moneda == 'UYU'
+          && c.medioPago in ['eBROU','Mercado Pago']
+          && c.productos is map && c.productos.size() > 0 && c.productos.size() <= 20
+          && c.total is number && c.total >= 0
+          && c.facturacion is map && c.datosEnvio is map
+          && c.facturacion.keys().hasOnly(['nombreCompleto','rut'])
+          && c.datosEnvio.keys().hasOnly(['nombreCompleto','departamento','ciudad','direccion','telefono','rut'])
+          && c.datosEnvio.nombreCompleto is string && c.datosEnvio.nombreCompleto.size() > 0 && c.datosEnvio.nombreCompleto.size() <= 120
+          && c.datosEnvio.departamento is string && c.datosEnvio.departamento.size() > 0 && c.datosEnvio.departamento.size() <= 80
+          && c.datosEnvio.ciudad is string && c.datosEnvio.ciudad.size() > 0 && c.datosEnvio.ciudad.size() <= 80
+          && c.datosEnvio.direccion is string && c.datosEnvio.direccion.size() > 0 && c.datosEnvio.direccion.size() <= 200
+          && c.datosEnvio.telefono is string && c.datosEnvio.telefono.size() > 0 && c.datosEnvio.telefono.size() <= 30
+          && c.datosEnvio.rut is string && c.datosEnvio.rut.size() <= 20
+          && c.facturacion.nombreCompleto == c.datosEnvio.nombreCompleto
+          && c.facturacion.rut == c.datosEnvio.rut;
+      }
+      allow create: if compraValida();
+      allow get: if request.auth != null && (resource.data.usuarioId == request.auth.uid || administrador());
+      allow list: if request.auth != null && administrador();
+      allow update, delete: if false;
     }
   }
 }

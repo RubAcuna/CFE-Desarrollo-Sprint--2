@@ -124,6 +124,56 @@ export async function consultarProducto(id) {
   return snapshot.exists() ? { ...snapshot.data(), id: snapshot.id } : null;
 }
 
+// Confirma un pedido en una única transacción: crea compras/{id} y descuenta el stock vigente.
+// Si falta stock o cambia la sesión, Firestore revierte todas las escrituras.
+export async function confirmarCompra(items, envio, medioPago) {
+  const user = auth().currentUser;
+  if (!user) throw Object.assign(new Error('Debes iniciar sesión para comprar.'), { code: 'compra/sin-sesion' });
+  if (!Array.isArray(items) || !items.length || items.length > 20 ||
+      items.some(item => typeof item?.id !== 'string' || item.id.includes('/') || !Number.isSafeInteger(item.cantidad) || item.cantidad < 1 || item.cantidad > 99)) {
+    throw Object.assign(new Error('Carrito inválido.'), { code: 'compra/carrito-invalido' });
+  }
+  const limpiar = (valor, maximo, obligatorio = true) => {
+    const texto = typeof valor === 'string' ? valor.trim() : '';
+    if ((obligatorio && !texto) || texto.length > maximo) throw Object.assign(new Error('Revisa los datos de envío.'), { code: 'compra/datos-invalidos' });
+    return texto;
+  };
+  const datosEnvio = {
+    nombreCompleto: limpiar(envio?.nombreCompleto, 120), departamento: limpiar(envio?.departamento, 80),
+    ciudad: limpiar(envio?.ciudad, 80), direccion: limpiar(envio?.direccion, 200),
+    telefono: limpiar(envio?.telefono, 30), rut: limpiar(envio?.rut, 20, false)
+  };
+  if (!['eBROU', 'Mercado Pago'].includes(medioPago)) throw Object.assign(new Error('Medio de pago inválido.'), { code: 'compra/datos-invalidos' });
+  const db = getFirestore(app), compraRef = doc(collection(db, 'compras'));
+  return runTransaction(db, async transaction => {
+    if (auth().currentUser?.uid !== user.uid) throw Object.assign(new Error('La sesión cambió.'), { code: 'compra/sin-sesion' });
+    const lecturas = [];
+    for (const item of items) {
+      const ref = doc(db, 'productos', item.id);
+      lecturas.push({ item, ref, snapshot: await transaction.get(ref) });
+    }
+    const productosCompra = {}; let total = 0;
+    for (const { item, ref, snapshot } of lecturas) {
+      if (!snapshot.exists()) throw Object.assign(new Error('Un producto ya no existe.'), { code: 'compra/carrito-invalido' });
+      const producto = snapshot.data(), stock = Number(producto.stock);
+      if (!producto.disponible || !Number.isSafeInteger(stock) || stock < item.cantidad || !Number.isFinite(producto.precio)) {
+        throw Object.assign(new Error(`No hay stock suficiente de ${producto.nombre || item.id}.`), { code: 'compra/sin-stock' });
+      }
+      const subtotal = producto.precio * item.cantidad; total += subtotal;
+      productosCompra[item.id] = { id: item.id, nombre: producto.nombre, precio: producto.precio, cantidad: item.cantidad, subtotal };
+      const nuevoStock = stock - item.cantidad;
+      transaction.update(ref, { stock: nuevoStock, disponible: nuevoStock > 0, ultimaCompraId: compraRef.id, actualizadoEn: serverTimestamp(), actualizadoPor: user.uid });
+    }
+    const compra = {
+      id: compraRef.id, usuarioId: user.uid, usuarioEmail: user.email || '', fecha: serverTimestamp(),
+      estado: 'confirmada', moneda: 'UYU', medioPago, productos: productosCompra, total,
+      facturacion: { nombreCompleto: datosEnvio.nombreCompleto, rut: datosEnvio.rut }, datosEnvio
+    };
+    transaction.set(compraRef, compra);
+    return { id: compraRef.id, total, medioPago };
+  });
+}
+
 // Administración: el permiso se verifica con el perfil del servidor y con las reglas.
 export const rolesAdministrables = ['Invitado', 'Estudiante', 'Docente', 'Administrador'];
 

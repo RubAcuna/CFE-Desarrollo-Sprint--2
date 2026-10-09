@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="shortcut icon" type="image/x-icon" href="img/r.ico">
+  <title>Robotech | Finalizar compra</title>
+</head>
+<body class="d-flex flex-column min-vh-100" data-page="carrito">
+  <nav class="navbar navbar-expand-lg navbar-dark sticky-top shadow-sm">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="index.html"><img src="img/robo.png" alt="Robo Tech" class="img-fluid" width="100"></a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-label="Abrir navegación"><span class="navbar-toggler-icon"></span></button>
+      <div class="collapse navbar-collapse" id="mainNav">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item"><a class="nav-link" data-page="inicio" href="index.html">Inicio</a></li>
+          <li class="nav-item"><a class="nav-link" data-page="catalogo" href="catalogo.html">Catálogo</a></li>
+          <li class="nav-item"><a class="nav-link" data-page="producto" href="producto.html">Producto</a></li>
+          <li class="nav-item"><a class="nav-link" data-page="carrito" href="carrito.html">Carrito</a></li>
+          <li class="nav-item"><a class="nav-link" data-page="perfil" href="perfil.html">Perfil</a></li>
+          <li class="nav-item"><a class="nav-link" data-page="admin" href="admin.html">Administración</a></li>
+        </ul>
+        <div class="cart-wrapper"><a href="carrito.html" class="cart-link" aria-label="Ver carrito de compras"><img src="img/carrito.png" alt="" class="cart-icon"><span class="carrito-contador" aria-live="polite">0</span></a></div>
+        <button class="btn btn-outline-light btn-sm" id="btnLoginPlaceholder">Ingresar</button>
+      </div>
+    </div>
+  </nav>
+  <hr class="separador-celeste">
+  <main class="flex-grow-1 py-5">
+    <div class="container checkout-contenedor">
+      <a href="carrito.html" class="btn btn-outline-light mb-3">Volver al carrito</a>
+      <h1>Finalizar compra</h1>
+      <p id="estadoCheckout" role="status" aria-live="polite">Comprobando sesión e inventario…</p>
+      <button id="iniciarCheckout" class="btn btn-robotech mb-3" type="button" hidden>Iniciar sesión</button>
+      <div id="checkoutVacio" class="alert alert-info" hidden>Tu carrito está vacío. <a href="catalogo.html">Explora el catálogo</a>.</div>
+      <form id="formCheckout" class="checkout" hidden>
+        <section class="mb-4" aria-labelledby="tituloProductos"><h2 id="tituloProductos" class="h4">Productos</h2><div id="productosCheckout" class="d-grid gap-2"></div><p id="totalCompra" class="fs-4 fw-bold mt-3 mb-0"></p></section>
+        <section class="mb-4" aria-labelledby="tituloFacturacion"><h2 id="tituloFacturacion" class="h4">Detalles de facturación y envío</h2>
+          <div class="row g-3">
+            <div class="col-md-6"><label class="form-label" for="nombreCompleto">Nombre y apellido</label><input class="form-control" id="nombreCompleto" name="nombreCompleto" autocomplete="name" maxlength="120" required></div>
+            <div class="col-md-6"><label class="form-label" for="telefono">Teléfono</label><input class="form-control" id="telefono" name="telefono" type="tel" autocomplete="tel" maxlength="30" required></div>
+            <div class="col-md-6"><label class="form-label" for="departamento">Departamento</label><input class="form-control" id="departamento" name="departamento" autocomplete="address-level1" maxlength="80" required></div>
+            <div class="col-md-6"><label class="form-label" for="ciudad">Ciudad</label><input class="form-control" id="ciudad" name="ciudad" autocomplete="address-level2" maxlength="80" required></div>
+            <div class="col-12"><label class="form-label" for="direccion">Dirección</label><input class="form-control" id="direccion" name="direccion" autocomplete="street-address" maxlength="200" required></div>
+            <div class="col-md-6"><label class="form-label" for="rut">RUT <span class="small">(opcional)</span></label><input class="form-control" id="rut" name="rut" inputmode="numeric" maxlength="20"></div>
+          </div>
+        </section>
+        <fieldset class="mb-4"><legend class="h4">Medio de pago</legend>
+          <div class="checkout-pagos">
+            <label class="checkout-metodo" for="pagoEbrou"><input id="pagoEbrou" class="form-check-input" type="radio" name="medioPago" value="eBROU" checked required><img src="img/br.png" alt="" width="56" height="56"><span><strong>eBROU</strong><span class="d-block small">Transferencia bancaria</span></span></label>
+            <label class="checkout-metodo" for="pagoMercado"><input id="pagoMercado" class="form-check-input" type="radio" name="medioPago" value="Mercado Pago" required><span class="checkout-pago-icono" aria-hidden="true">MP</span><span><strong>Mercado Pago</strong><span class="d-block small">Medio de pago seleccionado para coordinar</span></span></label>
+          </div>
+        </fieldset>
+        <p class="small">Al confirmar se registrará la compra y se descontará el stock. La selección del medio de pago no realiza un cobro automático.</p>
+        <button id="confirmarCompra" class="btn btn-robotech btn-lg" type="submit">Confirmar compra</button>
+        <p id="resultadoCompra" class="mt-3 mb-0" role="status" aria-live="polite"></p>
+      </form>
+      <section id="compraConfirmada" class="checkout" hidden aria-labelledby="tituloConfirmacion"><h2 id="tituloConfirmacion" class="h3">Compra confirmada</h2><p id="detalleConfirmacion"></p><a class="btn btn-robotech" href="catalogo.html">Volver al catálogo</a></section>
+      <noscript>Activa JavaScript para finalizar la compra.</noscript>
+    </div>
+  </main>
+  <hr class="separador-celeste">
+  <footer class="footer py-5 mt-auto"><div class="container"><div class="footer-top d-flex justify-content-between align-items-start flex-wrap gap-4"><div class="footer-identity"><img src="img/iso.png" alt="Robotech" class="footer-logo"><span class="footer-slogan">Crea · Programa · Transforma</span></div><section class="footer-contact" aria-labelledby="footer-contact-title"><h2 id="footer-contact-title">Contacto</h2><address><span class="contact-item">Rivera, Uruguay</span><a class="contact-item" href="mailto:contacto@robotech.com.uy">contacto@robotech.com.uy</a><a class="contact-item" href="tel:+59899000000">Teléfono: +598 99 000 000</a></address></section><span class="footer-author">Ruben Acuña - Desarrollo web</span></div><p class="footer-copyright mt-4">© 2026 Robotech</p></div></footer>
+  <div class="toast-container position-fixed bottom-0 end-0 p-3"><div id="appToast" class="toast"><div class="toast-header"><strong class="me-auto">Robotech</strong><button class="btn-close" data-bs-dismiss="toast"></button></div><div class="toast-body" id="toastMessage"></div></div></div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/base.js"></script><script src="js/login.js"></script><script src="js/productos.js"></script><script src="js/carrito.js"></script><script src="js/finalizar-compra.js"></script>
+</body>
+</html>
