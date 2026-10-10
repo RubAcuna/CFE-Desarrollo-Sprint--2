@@ -121,15 +121,9 @@ La contraseña se envía exclusivamente a Firebase Authentication. No se guarda 
 
 El registro admite Estudiante, Docente e Invitado. Google crea perfiles Invitado. El responsable puede asignar Administrador desde la consola de Firebase en el documento correspondiente al UID; el registro público no puede conceder ese rol. Una cuenta Administrador puede asignarlo desde el panel de administración cuando sus reglas estén publicadas. Los roles guardados no conceden por sí solos permisos sobre otros recursos: cada recurso requiere reglas propias.
 
-## Usuarios anteriores
 
-Los documentos antiguos con ID aleatorio y `passwd` no son cuentas de Authentication y no se usan para validar contraseñas. Para migrar una cuenta, registrarla mediante Authentication y trasladar sus datos al documento `usuarios/{uid}` desde un entorno administrativo. No copiar contraseñas al nuevo documento. El documento anterior no se elimina automáticamente.
 
-## Uso local
 
-Abrir el sitio con Live Server usando localhost (no mediante file://). Correo/contraseña y Google deben estar habilitados en Authentication. El dominio de GitHub Pages es rubacuna.github.io.
-
-Las pruebas de interfaz y del servicio con SDK simulado validan registro, roles, manejo de errores y separación de perfiles. La prueba completa con una cuenta real debe realizarla el titular de la cuenta.
 
 ## Usuarios  en Firestore
 Admin: rubenadmin@robotech.com
