@@ -194,3 +194,9 @@ La confirmación crea `compras/{id}` con fecha y hora del servidor, usuario, pro
 La pantalla `perfil.html` consulta `compras` con el UID autenticado y agrupa los productos confirmados para mostrar cantidades, número de pedidos y fecha de la compra más reciente. Las reglas exigen que la consulta incluya el UID, de modo que un usuario no puede recuperar pedidos ajenos.
 
 En `producto.html`, `js/comentarios.js` muestra las reseñas públicas y permite que una persona autenticada publique, actualice o elimine su propia reseña. Los documentos se guardan en `comentarios/{productoId}_{uid}` con producto, UID, nombre tomado del perfil, calificación, texto y fechas del servidor. Las reglas impiden suplantar el autor, comentar productos inexistentes o modificar la reseña de otra cuenta.
+
+## Estadísticas administrativas
+
+La pestaña **Estadísticas** de `admin.html` reúne vistas del sitio y ventas confirmadas de cursos. `js/base.js` registra como máximo una vista anónima por página, pestaña y día en la colección `vistas`; cada documento contiene únicamente `pagina`, `fecha` y la marca de tiempo del servidor. No se guardan UID, correos, direcciones IP ni datos del dispositivo. Las reglas permiten crear estas métricas públicamente y reservan su lectura al rol Administrador.
+
+Las ventas no se duplican en otra colección: `js/firebase.js` las calcula desde `compras` y agrupa los productos cuya categoría o nombre corresponde a cursos. Las compras nuevas conservan también la categoría del producto para mantener el histórico. El panel muestra vistas totales y del día, vistas por página, pedidos con cursos, unidades e ingresos por curso.

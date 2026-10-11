@@ -147,5 +147,17 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usuarioNombre','calificacion','texto','actualizadoEn']);
       allow delete: if request.auth != null && resource.data.usuarioId == request.auth.uid;
     }
+    // Métricas anónimas del sitio. Cada documento representa una vista y no contiene
+    // identificadores personales; solo los administradores pueden consultar el conjunto.
+    match /vistas/{vistaId} {
+      allow create: if request.resource.data.keys().hasOnly(['pagina','fecha','creadoEn'])
+        && request.resource.data.pagina is string
+        && request.resource.data.pagina.matches('[a-z0-9-]{1,40}')
+        && request.resource.data.fecha is string
+        && request.resource.data.fecha.matches('[0-9]{4}-[0-9]{2}-[0-9]{2}')
+        && request.resource.data.creadoEn == request.time;
+      allow read: if administrador();
+      allow update, delete: if false;
+    }
   }
 }
