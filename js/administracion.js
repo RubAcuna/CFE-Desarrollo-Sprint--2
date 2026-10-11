@@ -3,6 +3,7 @@
 document.addEventListener('DOMContentLoaded', async () => {
   const $ = id => document.getElementById(id);
   const panel=$('panelAdministracion'), estado=$('estadoAdministracion'), editor=$('editorRegistro');
+  const gestion=$('gestionRegistros'), estadisticas=$('estadisticasAdministracion');
   let servicio, seccion='usuarios', registros=[], seleccionado=null, administrador=null, version=0, ocupado=false;
   const esquemas={
     usuarios:[['usuario','Nombre','text',80],['email','Correo electrónico','email',254],['rol','Rol','select'],['password','Contraseña inicial','password',128],['uid','UID','readonly'],['proveedor','Método de acceso','readonly']],
@@ -14,9 +15,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     ocupado=valor;
     document.querySelectorAll('#panelAdministracion button').forEach(b=>b.disabled=valor);
     editor.querySelectorAll('input,textarea,select').forEach(e=>e.disabled=valor || (e.id==='campo_rol' && seleccionado?.id===administrador));
-    if(!valor) mostrar();
+    if(!valor&&seccion!=='estadisticas') mostrar();
   }
-  function limpiar() { registros=[];seleccionado=null;administrador=null;panel.hidden=true;editor.hidden=true;$('camposEditor').replaceChildren();$('listaRegistros').replaceChildren(); }
+  function limpiar() { registros=[];seleccionado=null;administrador=null;panel.hidden=true;editor.hidden=true;$('camposEditor').replaceChildren();$('listaRegistros').replaceChildren();$('resumenEstadisticas').replaceChildren();$('vistasPorPagina').replaceChildren();$('ventasCursos').replaceChildren(); }
   // El SDK usa la sesión actual y las reglas de Firestore, sin servidor propio.
   async function api(method='GET',id='',datos) { return servicio.administrar(seccion,method,id,datos); }
   function error(e,destino=estado) {
@@ -27,10 +28,36 @@ document.addEventListener('DOMContentLoaded', async () => {
     const actual=++version; editor.hidden=true; seleccionado=null; bloquear(true);
     registros=[];$('listaRegistros').replaceChildren();$('cantidadRegistros').textContent='';estado.textContent='Cargando…';
     try {
-      const result=await api();if(actual!==version)return;
-      registros=result.items;administrador=result.administrador;panel.hidden=false;$('accesoAdministracion').hidden=true;estado.textContent=mensaje;
+      if(seccion==='estadisticas') {
+        const result=await servicio.consultarEstadisticasAdministracion();if(actual!==version)return;
+        administrador=result.administrador;panel.hidden=false;$('accesoAdministracion').hidden=true;estado.textContent='';mostrarEstadisticas(result);
+      } else {
+        const result=await api();if(actual!==version)return;
+        registros=result.items;administrador=result.administrador;panel.hidden=false;$('accesoAdministracion').hidden=true;estado.textContent=mensaje;
+      }
     } catch(e) {if(actual===version)error(e);}
     finally {if(actual===version)bloquear(false);}
+  }
+  const numero=valor=>new Intl.NumberFormat('es-UY').format(valor||0);
+  const dinero=valor=>new Intl.NumberFormat('es-UY',{style:'currency',currency:'UYU',maximumFractionDigits:2}).format(valor||0);
+  function tabla(contenedor,encabezados,filas,vacio) {
+    contenedor.replaceChildren();
+    if(!filas.length){contenedor.append(crear('p','mb-0',vacio));return;}
+    const responsive=crear('div','table-responsive'),table=crear('table','table table-dark table-striped align-middle mb-0'),thead=document.createElement('thead'),tr=document.createElement('tr');
+    encabezados.forEach(texto=>{const th=document.createElement('th');th.scope='col';th.textContent=texto;tr.append(th);});thead.append(tr);table.append(thead);
+    const tbody=document.createElement('tbody');filas.forEach(fila=>{const row=document.createElement('tr');fila.forEach(valor=>{const td=document.createElement('td');td.textContent=valor;row.append(td);});tbody.append(row);});table.append(tbody);responsive.append(table);contenedor.append(responsive);
+  }
+  // Representa datos ya autorizados por Firestore; las ventas se calculan desde compras confirmadas.
+  function mostrarEstadisticas(datos) {
+    const resumen=$('resumenEstadisticas');resumen.replaceChildren();
+    [
+      ['Vistas totales',numero(datos.vistas.total)],['Vistas de hoy',numero(datos.vistas.hoy)],
+      ['Pedidos con cursos',numero(datos.cursos.pedidos)],['Cursos vendidos',numero(datos.cursos.unidades)],
+      ['Ingresos por cursos',dinero(datos.cursos.ingresos)]
+    ].forEach(([titulo,valor])=>{const card=crear('article','estadistica-card'),etiqueta=crear('p','mb-2',titulo),dato=crear('strong','estadistica-valor',valor);card.append(etiqueta,dato);resumen.append(card);});
+    tabla($('vistasPorPagina'),['Página','Vistas'],datos.vistas.paginas.map(item=>[item.pagina,numero(item.cantidad)]),'Todavía no hay vistas registradas.');
+    tabla($('ventasCursos'),['Curso','Unidades','Ingresos'],datos.cursos.productos.map(item=>[item.nombre,numero(item.cantidad),dinero(item.ingresos)]),'Todavía no hay ventas de cursos registradas.');
+    $('estadoEstadisticas').textContent='Estadísticas actualizadas.';
   }
   function mostrar() {
     const q=normalizar($('buscarRegistro').value), productos=seccion==='productos';
@@ -89,11 +116,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   function cambiar(tab) {
     if(ocupado)return;seccion=tab.dataset.seccion;$('buscarRegistro').value='';$('grupoFiltroRol').hidden=seccion!=='usuarios';
     document.querySelectorAll('[role=tab]').forEach(t=>{const active=t===tab;t.classList.toggle('active',active);t.setAttribute('aria-selected',String(active));t.tabIndex=active?0:-1;});
-    $('adminContenido').setAttribute('aria-labelledby',tab.id);$('tituloListado').textContent=seccion==='usuarios'?'Usuarios registrados':'Productos del catálogo';$('nuevoRegistro').textContent=seccion==='usuarios'?'Nuevo usuario':'Nuevo producto';cargar();
+    $('adminContenido').setAttribute('aria-labelledby',tab.id);gestion.hidden=seccion==='estadisticas';estadisticas.hidden=seccion!=='estadisticas';
+    if(seccion!=='estadisticas'){$('tituloListado').textContent=seccion==='usuarios'?'Usuarios registrados':'Productos del catálogo';$('nuevoRegistro').textContent=seccion==='usuarios'?'Nuevo usuario':'Nuevo producto';}
+    cargar();
   }
-  document.querySelectorAll('[role=tab]').forEach(tab=>{tab.addEventListener('click',()=>cambiar(tab));tab.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(e.key)){e.preventDefault();const target=e.key==='Home'?$('tabUsuarios'):e.key==='End'?$('tabProductos'):tab.id==='tabUsuarios'?$('tabProductos'):$('tabUsuarios');if(!ocupado){target.focus();cambiar(target);}}});});
+  const pestanas=[...document.querySelectorAll('[role=tab]')];
+  pestanas.forEach((tab,indice)=>{tab.addEventListener('click',()=>cambiar(tab));tab.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(e.key)){e.preventDefault();const destino=e.key==='Home'?0:e.key==='End'?pestanas.length-1:e.key==='ArrowRight'?(indice+1)%pestanas.length:(indice-1+pestanas.length)%pestanas.length;const target=pestanas[destino];if(!ocupado){target.focus();cambiar(target);}}});});
   $('buscarRegistro').addEventListener('input',mostrar);$('filtroRol').addEventListener('change',mostrar);$('nuevoRegistro').addEventListener('click',()=>abrir());
   $('cancelarRegistro').addEventListener('click',()=>{editor.reset();editor.hidden=true;seleccionado=null;$('nuevoRegistro').focus();});
+  $('actualizarEstadisticas').addEventListener('click',()=>cargar());
   $('accesoAdministracion').addEventListener('click',()=>$('btnLoginPlaceholder').click());
   try {servicio=await import('./firebase.js');servicio.observarSesion(()=>{++version;limpiar();cargar();});}catch(e){error(e);}
 });

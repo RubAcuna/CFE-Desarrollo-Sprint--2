@@ -2,7 +2,7 @@
 // Las pantallas importan este módulo para consultar datos o gestionar la sesión.
 import { initializeApp, getApps, getApp, deleteApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut, deleteUser, inMemoryPersistence, setPersistence } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
-import { getFirestore, collection, getDocsFromServer, getDocFromServer, doc, getDoc, updateDoc, deleteDoc, query, where, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocsFromServer, getDocFromServer, doc, getDoc, updateDoc, deleteDoc, query, where, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 const firebaseConfig = {
     apiKey: "AIzaSyBBaLxBzpPxl6IES1x8gDbW9JDGHGLQGGk",
     authDomain: "robotech-8afa0.firebaseapp.com",
@@ -26,6 +26,24 @@ function auth() {
   return getAuth(app);
 }
 const rolesRegistro = ['Estudiante', 'Docente', 'Invitado'];
+
+// Registra como máximo una vista por página y pestaña del navegador durante cada día.
+// El documento es anónimo: no guarda UID, correo, IP ni datos del dispositivo.
+export async function registrarVistaPagina(pagina) {
+  const nombre = typeof pagina === 'string' ? pagina.trim().toLowerCase() : '';
+  if (!app || !/^[a-z0-9-]{1,40}$/.test(nombre)) return false;
+  const ahora = new Date(), fecha = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}-${String(ahora.getDate()).padStart(2, '0')}`;
+  const clave = `robotech:vista:${fecha}:${nombre}`;
+  try {
+    if (sessionStorage.getItem(clave)) return false;
+    await addDoc(collection(getFirestore(app), 'vistas'), { pagina: nombre, fecha, creadoEn: serverTimestamp() });
+    sessionStorage.setItem(clave, '1');
+    return true;
+  } catch (error) {
+    console.warn('No se pudo registrar la vista:', error);
+    return false;
+  }
+}
 
 // Firestore almacena perfiles; las contraseñas pertenecen a Firebase Authentication.
 // Crea o actualiza usuarios/{uid} dentro de una transacción. Conserva el rol de cuentas existentes y devuelve el perfil; no guarda contraseñas.
@@ -160,7 +178,7 @@ export async function confirmarCompra(items, envio, medioPago) {
         throw Object.assign(new Error(`No hay stock suficiente de ${producto.nombre || item.id}.`), { code: 'compra/sin-stock' });
       }
       const subtotal = producto.precio * item.cantidad; total += subtotal;
-      productosCompra[item.id] = { id: item.id, nombre: producto.nombre, precio: producto.precio, cantidad: item.cantidad, subtotal };
+      productosCompra[item.id] = { id: item.id, nombre: producto.nombre, categoria: producto.categoria || '', precio: producto.precio, cantidad: item.cantidad, subtotal };
       const nuevoStock = stock - item.cantidad;
       transaction.update(ref, { stock: nuevoStock, disponible: nuevoStock > 0, ultimaCompraId: compraRef.id, actualizadoEn: serverTimestamp(), actualizadoPor: user.uid });
     }
@@ -248,6 +266,57 @@ export async function comprobarAdministrador() {
     throw Object.assign(new Error('Tu cuenta no tiene permiso de administrador.'), { code: 'admin/sin-permiso' });
   }
   return user.uid;
+}
+
+// Reúne las vistas anónimas y las compras confirmadas para el panel administrativo.
+// Las ventas de cursos se reconocen por la categoría o el nombre guardado en la compra;
+// las compras anteriores se completan con la categoría vigente del catálogo.
+export async function consultarEstadisticasAdministracion() {
+  const administrador = await comprobarAdministrador(), db = getFirestore(app);
+  const [vistasSnapshot, comprasSnapshot, productosSnapshot] = await Promise.all([
+    getDocsFromServer(collection(db, 'vistas')),
+    getDocsFromServer(collection(db, 'compras')),
+    getDocsFromServer(collection(db, 'productos'))
+  ]);
+  if (auth().currentUser?.uid !== administrador) throw Object.assign(new Error('La sesión cambió.'), { code: 'admin/sin-sesion' });
+  const hoyDate = new Date(), hoy = `${hoyDate.getFullYear()}-${String(hoyDate.getMonth() + 1).padStart(2, '0')}-${String(hoyDate.getDate()).padStart(2, '0')}`;
+  const porPagina = new Map();
+  vistasSnapshot.docs.forEach(documento => {
+    const vista = documento.data(), pagina = typeof vista.pagina === 'string' ? vista.pagina : 'otra';
+    porPagina.set(pagina, (porPagina.get(pagina) || 0) + 1);
+  });
+  const categorias = new Map(productosSnapshot.docs.map(documento => {
+    const producto = documento.data();
+    return [documento.id, { nombre: producto.nombre || documento.id, categoria: producto.categoria || '' }];
+  }));
+  const cursos = new Map(); let pedidosCursos = 0, unidadesCursos = 0, ingresosCursos = 0;
+  comprasSnapshot.docs.forEach(documento => {
+    const compra = documento.data(); let contieneCurso = false;
+    Object.values(compra.productos || {}).forEach(item => {
+      const actual = categorias.get(item.id) || {}, nombre = String(item.nombre || actual.nombre || item.id || 'Curso');
+      const categoria = String(item.categoria || actual.categoria || '');
+      const esCurso = /curso/i.test(`${categoria} ${nombre}`);
+      if (!esCurso) return;
+      const cantidad = Number.isSafeInteger(item.cantidad) && item.cantidad > 0 ? item.cantidad : 0;
+      const subtotal = Number.isFinite(item.subtotal) ? item.subtotal : (Number(item.precio) || 0) * cantidad;
+      contieneCurso = true; unidadesCursos += cantidad; ingresosCursos += subtotal;
+      const anterior = cursos.get(item.id) || { id: item.id, nombre, cantidad: 0, ingresos: 0 };
+      anterior.cantidad += cantidad; anterior.ingresos += subtotal; cursos.set(item.id, anterior);
+    });
+    if (contieneCurso) pedidosCursos++;
+  });
+  return {
+    administrador,
+    vistas: {
+      total: vistasSnapshot.size,
+      hoy: vistasSnapshot.docs.filter(documento => documento.data().fecha === hoy).length,
+      paginas: [...porPagina].map(([pagina, cantidad]) => ({ pagina, cantidad })).sort((a, b) => b.cantidad - a.cantidad || a.pagina.localeCompare(b.pagina, 'es'))
+    },
+    cursos: {
+      pedidos: pedidosCursos, unidades: unidadesCursos, ingresos: ingresosCursos,
+      productos: [...cursos.values()].sort((a, b) => b.cantidad - a.cantidad || a.nombre.localeCompare(b.nombre, 'es'))
+    }
+  };
 }
 
 // Devuelve únicamente los atributos que el panel necesita; omite campos antiguos o sensibles.
