@@ -197,6 +197,6 @@ En `producto.html`, `js/comentarios.js` muestra las reseñas públicas y permite
 
 ## Estadísticas administrativas
 
-La pestaña **Estadísticas** de `admin.html` reúne vistas del sitio y ventas confirmadas de cursos. `js/base.js` registra como máximo una vista anónima por página, pestaña y día en la colección `vistas`; cada documento contiene únicamente `pagina`, `fecha` y la marca de tiempo del servidor. No se guardan UID, correos, direcciones IP ni datos del dispositivo. Las reglas permiten crear estas métricas públicamente y reservan su lectura al rol Administrador.
+La pestaña **Estadísticas** de `admin.html` reúne kits visitados y kits vendidos. Al abrir el detalle de un producto, `js/producto.js` registra como máximo una visita anónima por kit, pestaña y día en la colección `vistas`; el documento contiene `pagina`, `productoId`, `fecha` y la marca de tiempo del servidor. No se guardan UID, correos, direcciones IP ni datos del dispositivo. Las reglas comprueban que el producto exista, permiten crear estas métricas públicamente y reservan su lectura al rol Administrador.
 
-Las ventas no se duplican en otra colección: `js/firebase.js` las calcula desde `compras` y agrupa los productos cuya categoría o nombre corresponde a cursos. Las compras nuevas conservan también la categoría del producto para mantener el histórico. El panel muestra vistas totales y del día, vistas por página, pedidos con cursos, unidades e ingresos por curso.
+Las ventas no se duplican en otra colección: `js/firebase.js` las calcula desde `compras` y agrupa todos los productos confirmados. El panel muestra visitas totales y del día a fichas de kits, cantidad de visitas por kit, unidades vendidas e ingresos por kit.
