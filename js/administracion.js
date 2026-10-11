@@ -126,5 +126,5 @@ document.addEventListener('DOMContentLoaded', async () => {
   $('cancelarRegistro').addEventListener('click',()=>{editor.reset();editor.hidden=true;seleccionado=null;$('nuevoRegistro').focus();});
   $('actualizarEstadisticas').addEventListener('click',()=>cargar());
   $('accesoAdministracion').addEventListener('click',()=>$('btnLoginPlaceholder').click());
-  try {servicio=await import('./firebase.js');servicio.observarSesion(()=>{++version;limpiar();cargar();});}catch(e){error(e);}
+  try {servicio=await import('./firebase.js?v=estadisticas-20261011');servicio.observarSesion(()=>{++version;limpiar();cargar();});}catch(e){error(e);}
 });
