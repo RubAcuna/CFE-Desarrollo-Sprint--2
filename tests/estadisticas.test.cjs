@@ -3,21 +3,22 @@ const hoyDate = new Date();
 const hoy = `${hoyDate.getFullYear()}-${String(hoyDate.getMonth() + 1).padStart(2, '0')}-${String(hoyDate.getDate()).padStart(2, '0')}`;
 const datos = {
   vistas: [
-    { id: 'v1', pagina: 'inicio', fecha: hoy },
-    { id: 'v2', pagina: 'catalogo', fecha: '2026-01-01' }
+    { id: 'v1', pagina: 'producto', productoId: 'arduino', fecha: hoy },
+    { id: 'v2', pagina: 'producto', productoId: 'microbit', fecha: '2026-01-01' },
+    { id: 'v3', pagina: 'catalogo', fecha: hoy }
   ],
   compras: [
     { id: 'c1', productos: {
-      'curso-directo': { id: 'curso-directo', nombre: 'Curso inicial', categoria: 'Cursos', cantidad: 2, subtotal: 2400 },
-      kit: { id: 'kit', nombre: 'Kit Arduino', categoria: 'Kits Arduino', cantidad: 1, subtotal: 900 }
+      arduino: { id: 'arduino', nombre: 'Kit Arduino', cantidad: 2, subtotal: 2400 },
+      microbit: { id: 'microbit', nombre: 'Kit micro:bit', cantidad: 1, subtotal: 900 }
     } },
     { id: 'c2', productos: {
-      'curso-anterior': { id: 'curso-anterior', nombre: 'Programación', cantidad: 1, subtotal: 1500 }
+      arduino: { id: 'arduino', nombre: 'Kit Arduino', cantidad: 1, precio: 1200 }
     } }
   ],
   productos: [
-    { id: 'curso-anterior', nombre: 'Programación', categoria: 'Cursos y recursos educativos' },
-    { id: 'kit', nombre: 'Kit Arduino', categoria: 'Kits Arduino' }
+    { id: 'arduino', nombre: 'Kit Arduino' },
+    { id: 'microbit', nombre: 'Kit micro:bit' }
   ]
 };
 const almacenSesion = new Map(); let creadas = 0;
@@ -35,18 +36,22 @@ const source = fs.readFileSync(require('path').join(__dirname, '../js/firebase.j
 vm.runInContext(source, ctx);
 const run = codigo => vm.runInContext(codigo, ctx);
 (async () => {
-  assert.equal(await run("registrarVistaPagina('inicio')"), true);
-  assert.equal(await run("registrarVistaPagina('inicio')"), false);
-  assert.equal(creadas, 1, 'una pestaña registra una sola vista diaria por página');
+  assert.equal(await run("registrarVistaProducto('esp32')"), true);
+  assert.equal(await run("registrarVistaProducto('esp32')"), false);
+  assert.equal(creadas, 1, 'una pestaña registra una sola visita diaria por kit');
   const resumen = await run('consultarEstadisticasAdministracion()');
-  assert.equal(resumen.vistas.total, 3);
-  assert.equal(resumen.vistas.hoy, 2);
-  assert.deepEqual(JSON.parse(JSON.stringify(resumen.vistas.paginas)), [
-    { pagina: 'inicio', cantidad: 2 }, { pagina: 'catalogo', cantidad: 1 }
+  assert.equal(resumen.kits.visitasTotal, 3, 'ignora vistas generales sin productoId');
+  assert.equal(resumen.kits.visitasHoy, 2);
+  assert.deepEqual(JSON.parse(JSON.stringify(resumen.kits.visitados)), [
+    { id: 'esp32', nombre: 'esp32', cantidad: 1 },
+    { id: 'arduino', nombre: 'Kit Arduino', cantidad: 1 },
+    { id: 'microbit', nombre: 'Kit micro:bit', cantidad: 1 }
   ]);
-  assert.equal(resumen.cursos.pedidos, 2);
-  assert.equal(resumen.cursos.unidades, 3);
-  assert.equal(resumen.cursos.ingresos, 3900);
-  assert.equal(resumen.cursos.productos.length, 2);
-  console.log('OK estadísticas: vista diaria anónima, agrupación por página y ventas de cursos actuales o históricas.');
+  assert.equal(resumen.kits.vendidosTotal, 4);
+  assert.equal(resumen.kits.ingresos, 4500);
+  assert.deepEqual(JSON.parse(JSON.stringify(resumen.kits.vendidos)), [
+    { id: 'arduino', nombre: 'Kit Arduino', cantidad: 3, ingresos: 3600 },
+    { id: 'microbit', nombre: 'Kit micro:bit', cantidad: 1, ingresos: 900 }
+  ]);
+  console.log('OK estadísticas: visitas por kit y unidades vendidas desde compras confirmadas.');
 })().catch(error => { console.error(error); process.exitCode = 1; });
