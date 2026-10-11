@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     editor.querySelectorAll('input,textarea,select').forEach(e=>e.disabled=valor || (e.id==='campo_rol' && seleccionado?.id===administrador));
     if(!valor&&seccion!=='estadisticas') mostrar();
   }
-  function limpiar() { registros=[];seleccionado=null;administrador=null;panel.hidden=true;editor.hidden=true;$('camposEditor').replaceChildren();$('listaRegistros').replaceChildren();$('resumenEstadisticas').replaceChildren();$('vistasPorPagina').replaceChildren();$('ventasCursos').replaceChildren(); }
+  function limpiar() { registros=[];seleccionado=null;administrador=null;panel.hidden=true;editor.hidden=true;$('camposEditor').replaceChildren();$('listaRegistros').replaceChildren();$('resumenEstadisticas').replaceChildren();$('kitsVisitados').replaceChildren();$('kitsVendidos').replaceChildren(); }
   // El SDK usa la sesión actual y las reglas de Firestore, sin servidor propio.
   async function api(method='GET',id='',datos) { return servicio.administrar(seccion,method,id,datos); }
   function error(e,destino=estado) {
@@ -47,16 +47,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     encabezados.forEach(texto=>{const th=document.createElement('th');th.scope='col';th.textContent=texto;tr.append(th);});thead.append(tr);table.append(thead);
     const tbody=document.createElement('tbody');filas.forEach(fila=>{const row=document.createElement('tr');fila.forEach(valor=>{const td=document.createElement('td');td.textContent=valor;row.append(td);});tbody.append(row);});table.append(tbody);responsive.append(table);contenedor.append(responsive);
   }
-  // Representa datos ya autorizados por Firestore; las ventas se calculan desde compras confirmadas.
+  // Representa las visitas a fichas de kits y las unidades de compras confirmadas.
   function mostrarEstadisticas(datos) {
     const resumen=$('resumenEstadisticas');resumen.replaceChildren();
     [
-      ['Vistas totales',numero(datos.vistas.total)],['Vistas de hoy',numero(datos.vistas.hoy)],
-      ['Pedidos con cursos',numero(datos.cursos.pedidos)],['Cursos vendidos',numero(datos.cursos.unidades)],
-      ['Ingresos por cursos',dinero(datos.cursos.ingresos)]
+      ['Visitas a kits',numero(datos.kits.visitasTotal)],['Visitas de hoy',numero(datos.kits.visitasHoy)],
+      ['Kits vendidos',numero(datos.kits.vendidosTotal)],['Ingresos por kits',dinero(datos.kits.ingresos)]
     ].forEach(([titulo,valor])=>{const card=crear('article','estadistica-card'),etiqueta=crear('p','mb-2',titulo),dato=crear('strong','estadistica-valor',valor);card.append(etiqueta,dato);resumen.append(card);});
-    tabla($('vistasPorPagina'),['Página','Vistas'],datos.vistas.paginas.map(item=>[item.pagina,numero(item.cantidad)]),'Todavía no hay vistas registradas.');
-    tabla($('ventasCursos'),['Curso','Unidades','Ingresos'],datos.cursos.productos.map(item=>[item.nombre,numero(item.cantidad),dinero(item.ingresos)]),'Todavía no hay ventas de cursos registradas.');
+    tabla($('kitsVisitados'),['Kit','Visitas'],datos.kits.visitados.map(item=>[item.nombre,numero(item.cantidad)]),'Todavía no hay kits visitados.');
+    tabla($('kitsVendidos'),['Kit','Unidades','Ingresos'],datos.kits.vendidos.map(item=>[item.nombre,numero(item.cantidad),dinero(item.ingresos)]),'Todavía no hay kits vendidos.');
     $('estadoEstadisticas').textContent='Estadísticas actualizadas.';
   }
   function mostrar() {
@@ -126,5 +125,5 @@ document.addEventListener('DOMContentLoaded', async () => {
   $('cancelarRegistro').addEventListener('click',()=>{editor.reset();editor.hidden=true;seleccionado=null;$('nuevoRegistro').focus();});
   $('actualizarEstadisticas').addEventListener('click',()=>cargar());
   $('accesoAdministracion').addEventListener('click',()=>$('btnLoginPlaceholder').click());
-  try {servicio=await import('./firebase.js?v=estadisticas-20261011');servicio.observarSesion(()=>{++version;limpiar();cargar();});}catch(e){error(e);}
+  try {servicio=await import('./firebase.js?v=kits-20261011');servicio.observarSesion(()=>{++version;limpiar();cargar();});}catch(e){error(e);}
 });

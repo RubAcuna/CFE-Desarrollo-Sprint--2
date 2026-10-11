@@ -135,6 +135,8 @@ async function inicializarProducto() {
         const producto = await Productos.obtener(id);
         if (!producto) { mostrarErrorProducto(contenedor, false); return; }
         mostrarDetalleProducto(producto, contenedor);
+        // Solo cuenta la visita después de confirmar que el kit existe en Firestore.
+        import('./firebase.js?v=kits-20261011').then(servicio => servicio.registrarVistaProducto(producto.id)).catch(() => {});
     } catch {
         const aviso = crearElementoProducto('p', 'alert alert-warning', 'No se pudo consultar el producto. Revisa tu conexión e intenta nuevamente.');
         aviso.setAttribute('role', 'alert');

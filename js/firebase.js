@@ -45,6 +45,24 @@ export async function registrarVistaPagina(pagina) {
   }
 }
 
+// Registra la visita al detalle de un kit concreto. La clave de sesión evita
+// duplicar la misma visita si se recarga el producto durante el mismo día.
+export async function registrarVistaProducto(productoId) {
+  const id = typeof productoId === 'string' ? productoId.trim().toLowerCase() : '';
+  if (!app || !/^[a-z0-9-]{1,80}$/.test(id)) return false;
+  const ahora = new Date(), fecha = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}-${String(ahora.getDate()).padStart(2, '0')}`;
+  const clave = `robotech:vista-kit:${fecha}:${id}`;
+  try {
+    if (sessionStorage.getItem(clave)) return false;
+    await addDoc(collection(getFirestore(app), 'vistas'), { pagina: 'producto', productoId: id, fecha, creadoEn: serverTimestamp() });
+    sessionStorage.setItem(clave, '1');
+    return true;
+  } catch (error) {
+    console.warn('No se pudo registrar la visita del kit:', error);
+    return false;
+  }
+}
+
 // Firestore almacena perfiles; las contraseñas pertenecen a Firebase Authentication.
 // Crea o actualiza usuarios/{uid} dentro de una transacción. Conserva el rol de cuentas existentes y devuelve el perfil; no guarda contraseñas.
 export async function guardarPerfilUsuario(user, usuario = '', rol = 'Invitado') {
@@ -268,9 +286,7 @@ export async function comprobarAdministrador() {
   return user.uid;
 }
 
-// Reúne las vistas anónimas y las compras confirmadas para el panel administrativo.
-// Las ventas de cursos se reconocen por la categoría o el nombre guardado en la compra;
-// las compras anteriores se completan con la categoría vigente del catálogo.
+// Reúne visitas al detalle de cada kit y todas las unidades de compras confirmadas.
 export async function consultarEstadisticasAdministracion() {
   const administrador = await comprobarAdministrador(), db = getFirestore(app);
   const [vistasSnapshot, comprasSnapshot, productosSnapshot] = await Promise.all([
@@ -280,41 +296,43 @@ export async function consultarEstadisticasAdministracion() {
   ]);
   if (auth().currentUser?.uid !== administrador) throw Object.assign(new Error('La sesión cambió.'), { code: 'admin/sin-sesion' });
   const hoyDate = new Date(), hoy = `${hoyDate.getFullYear()}-${String(hoyDate.getMonth() + 1).padStart(2, '0')}-${String(hoyDate.getDate()).padStart(2, '0')}`;
-  const porPagina = new Map();
-  vistasSnapshot.docs.forEach(documento => {
-    const vista = documento.data(), pagina = typeof vista.pagina === 'string' ? vista.pagina : 'otra';
-    porPagina.set(pagina, (porPagina.get(pagina) || 0) + 1);
-  });
-  const categorias = new Map(productosSnapshot.docs.map(documento => {
+  const productos = new Map(productosSnapshot.docs.map(documento => {
     const producto = documento.data();
-    return [documento.id, { nombre: producto.nombre || documento.id, categoria: producto.categoria || '' }];
+    return [documento.id, { nombre: producto.nombre || documento.id }];
   }));
-  const cursos = new Map(); let pedidosCursos = 0, unidadesCursos = 0, ingresosCursos = 0;
+  const visitas = new Map(); let visitasTotal = 0, visitasHoy = 0;
+  vistasSnapshot.docs.forEach(documento => {
+    const vista = documento.data(), id = typeof vista.productoId === 'string' ? vista.productoId : '';
+    if (!id) return;
+    const nombre = productos.get(id)?.nombre || id;
+    visitasTotal++;
+    if (vista.fecha === hoy) visitasHoy++;
+    const anterior = visitas.get(id) || { id, nombre, cantidad: 0 };
+    anterior.cantidad++;
+    visitas.set(id, anterior);
+  });
+  const vendidos = new Map(); let unidadesVendidas = 0, ingresosKits = 0;
   comprasSnapshot.docs.forEach(documento => {
-    const compra = documento.data(); let contieneCurso = false;
+    const compra = documento.data();
     Object.values(compra.productos || {}).forEach(item => {
-      const actual = categorias.get(item.id) || {}, nombre = String(item.nombre || actual.nombre || item.id || 'Curso');
-      const categoria = String(item.categoria || actual.categoria || '');
-      const esCurso = /curso/i.test(`${categoria} ${nombre}`);
-      if (!esCurso) return;
+      const id = String(item.id || ''), nombre = String(item.nombre || productos.get(id)?.nombre || id || 'Kit');
       const cantidad = Number.isSafeInteger(item.cantidad) && item.cantidad > 0 ? item.cantidad : 0;
       const subtotal = Number.isFinite(item.subtotal) ? item.subtotal : (Number(item.precio) || 0) * cantidad;
-      contieneCurso = true; unidadesCursos += cantidad; ingresosCursos += subtotal;
-      const anterior = cursos.get(item.id) || { id: item.id, nombre, cantidad: 0, ingresos: 0 };
-      anterior.cantidad += cantidad; anterior.ingresos += subtotal; cursos.set(item.id, anterior);
+      if (!id || !cantidad) return;
+      unidadesVendidas += cantidad; ingresosKits += subtotal;
+      const anterior = vendidos.get(id) || { id, nombre, cantidad: 0, ingresos: 0 };
+      anterior.cantidad += cantidad; anterior.ingresos += subtotal; vendidos.set(id, anterior);
     });
-    if (contieneCurso) pedidosCursos++;
   });
   return {
     administrador,
-    vistas: {
-      total: vistasSnapshot.size,
-      hoy: vistasSnapshot.docs.filter(documento => documento.data().fecha === hoy).length,
-      paginas: [...porPagina].map(([pagina, cantidad]) => ({ pagina, cantidad })).sort((a, b) => b.cantidad - a.cantidad || a.pagina.localeCompare(b.pagina, 'es'))
-    },
-    cursos: {
-      pedidos: pedidosCursos, unidades: unidadesCursos, ingresos: ingresosCursos,
-      productos: [...cursos.values()].sort((a, b) => b.cantidad - a.cantidad || a.nombre.localeCompare(b.nombre, 'es'))
+    kits: {
+      visitasTotal,
+      visitasHoy,
+      visitados: [...visitas.values()].sort((a, b) => b.cantidad - a.cantidad || a.nombre.localeCompare(b.nombre, 'es')),
+      vendidosTotal: unidadesVendidas,
+      ingresos: ingresosKits,
+      vendidos: [...vendidos.values()].sort((a, b) => b.cantidad - a.cantidad || a.nombre.localeCompare(b.nombre, 'es'))
     }
   };
 }
