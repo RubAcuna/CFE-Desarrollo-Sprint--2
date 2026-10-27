@@ -78,6 +78,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const $ = id => modal.querySelector('#' + id);
     let registro = false, ocupado = false, servicio = null, cargando = null, sesion = null, pendiente = null;
     const botones = ['loginIniciar', 'loginGoogle', 'cerrarSesion', 'reintentarPerfil', 'vistaLogin', 'vistaRegistro'];
+    // Mantiene la barra bajo la navegación sincronizada con el perfil autenticado.
+    function actualizarBarraSesion(user, perfil = null, cargandoPerfil = false) {
+        const nombre = document.querySelector('#sessionUserName');
+        const rol = document.querySelector('#sessionUserRole');
+        const estado = document.querySelector('#sessionStatusText');
+        if (!nombre || !rol || !estado) return;
+
+        if (!user) {
+            nombre.textContent = 'Sin sesión iniciada';
+            rol.textContent = '—';
+            estado.textContent = 'Inicia sesión para identificarte';
+            return;
+        }
+
+        const identidad = perfil?.usuario || perfil?.Usuario || user.displayName || user.email || 'Usuario';
+        nombre.textContent = identidad;
+        rol.textContent = perfil?.rol || (cargandoPerfil ? 'Cargando…' : 'No disponible');
+        estado.textContent = cargandoPerfil ? 'Cargando perfil' : perfil ? 'Sesión activa' : 'Perfil no disponible';
+    }
     // Evita operaciones simultáneas al deshabilitar botones mientras se completa una petición.
     function bloquear(valor) {
         ocupado = valor;
@@ -110,6 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Actualiza el modal y el botón de cabecera según exista una sesión autenticada.
     function mostrarSesion(user) {
         sesion = user;
+        actualizarBarraSesion(user, null, !!user);
         $('accesoPanel').hidden = !!user;
         $('sesionPanel').hidden = !user;
         ingresar.textContent = user ? 'Mi cuenta' : 'Ingresar';
@@ -135,8 +155,12 @@ document.addEventListener('DOMContentLoaded', () => {
                             const perfil = await servicio.obtenerPerfil();
                             if (sesion?.uid === user.uid && perfil) $('sesionRol').textContent = 'Rol: ' + perfil.rol;
                             if (sesion?.uid === user.uid && !perfil) $('reintentarPerfil').hidden = false;
+                            if (sesion?.uid === user.uid) actualizarBarraSesion(user, perfil);
                         } catch {
-                            if (sesion?.uid === user.uid) $('reintentarPerfil').hidden = false;
+                            if (sesion?.uid === user.uid) {
+                                $('reintentarPerfil').hidden = false;
+                                actualizarBarraSesion(user);
+                            }
                         }
                     }
                 });
@@ -148,6 +172,16 @@ document.addEventListener('DOMContentLoaded', () => {
         })();
         return cargando;
     }
+    window.addEventListener('robotech:perfil-actualizado', async () => {
+        const usuarioActual = sesion;
+        if (!usuarioActual || !servicio) return;
+        try {
+            const perfil = await servicio.obtenerPerfil();
+            if (sesion?.uid === usuarioActual.uid) actualizarBarraSesion(usuarioActual, perfil);
+        } catch {
+            if (sesion?.uid === usuarioActual.uid) actualizarBarraSesion(usuarioActual);
+        }
+    });
     // Traduce códigos técnicos de Authentication a mensajes comprensibles para el usuario.
     const errores = {
         'auth/invalid-credential': 'El correo o la contraseña no son correctos.',
@@ -178,6 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
             mostrarSesion(resultado.user);
             $('loginClave').value = ''; $('registroConfirmar').value = '';
             pendiente = resultado.perfilPendiente ? resultado : null;
+            actualizarBarraSesion(resultado.user, resultado.perfil, !!pendiente);
             if (!pendiente) window.dispatchEvent(new Event('robotech:perfil-actualizado'));
             $('reintentarPerfil').hidden = !pendiente;
             $('sesionRol').textContent = resultado.perfil ? 'Rol: ' + resultado.perfil.rol : '';
@@ -211,6 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const perfil = await servicio.guardarPerfilUsuario(sesion, pendiente?.usuarioPendiente || '', pendiente?.rolPendiente || 'Invitado');
             pendiente = null; $('reintentarPerfil').hidden = true;
+            actualizarBarraSesion(sesion, perfil);
             $('sesionRol').textContent = 'Rol: ' + perfil.rol;
             $('loginEstado').textContent = 'Perfil guardado.';
             window.dispatchEvent(new Event('robotech:perfil-actualizado'));

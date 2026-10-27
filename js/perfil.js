@@ -137,6 +137,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         estado.textContent = 'Guardando cambios…';
         try {
             await servicio.actualizarNombreUsuario(usuario.value);
+            window.dispatchEvent(new Event('robotech:perfil-actualizado'));
             if (actual === version) estado.textContent = 'Perfil actualizado.';
         } catch {
             if (actual === version) estado.textContent = 'No se pudo guardar el perfil. Intenta nuevamente.';

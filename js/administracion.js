@@ -7,10 +7,25 @@ document.addEventListener('DOMContentLoaded', async () => {
   let servicio, seccion='usuarios', registros=[], seleccionado=null, administrador=null, version=0, ocupado=false;
   const esquemas={
     usuarios:[['usuario','Nombre','text',80],['email','Correo electrónico','email',254],['rol','Rol','select'],['password','Contraseña inicial','password',128],['uid','UID','readonly'],['proveedor','Método de acceso','readonly']],
-    productos:[['id','ID (minúsculas, números y guiones)','text',80],['nombre','Nombre','text',150],['descripcion','Descripción','textarea',5000],['categoria','Categoría','text',100],['precio','Precio (UYU)','number'],['stock','Stock','number'],['disponible','Disponible para la venta','checkbox'],['imagenes','Imágenes: URL HTTPS o ruta img/, una por línea','textarea',100000],['caracteristicas','Características, una por línea (opcional)','textarea',100000]]
+    productos:[['id','ID (minúsculas, números y guiones)','text',80],['nombre','Nombre','text',150],['descripcion','Descripción','textarea',5000],['categoria','Categoría','text',100],['precio','Precio (UYU)','number'],['stock','Stock','number'],['disponible','Disponible para la venta','checkbox'],['imagenes','Cargar imágenes desde el dispositivo','file'],['caracteristicas','Características, una por línea (opcional)','textarea',100000]]
   };
   const crear=(tag,clase,texto)=>{const e=document.createElement(tag);e.className=clase;if(texto!==undefined)e.textContent=texto;return e;};
   const normalizar=s=>String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  async function subirImagenCloudinary(archivo) {
+    const { cloudName, uploadPreset } = await import('./cloudinary-config.js');
+    if (!cloudName || cloudName === 'TU_CLOUD_NAME' || !uploadPreset || uploadPreset === 'TU_UPLOAD_PRESET') {
+      throw new Error('Configura el cloud name y el preset de carga sin firma en js/cloudinary-config.js.');
+    }
+    const datos = new FormData();
+    datos.append('file', archivo);
+    datos.append('upload_preset', uploadPreset);
+    datos.append('folder', 'robotech/productos');
+    const respuesta = await fetch(`https://api.cloudinary.com/v1_1/${encodeURIComponent(cloudName)}/image/upload`, { method: 'POST', body: datos });
+    const resultado = await respuesta.json().catch(() => ({}));
+    if (!respuesta.ok) throw new Error(resultado.error?.message || 'Cloudinary no pudo subir la imagen.');
+    if (typeof resultado.secure_url !== 'string' || !resultado.secure_url.startsWith('https://')) throw new Error('Cloudinary no devolvió una URL segura para la imagen.');
+    return resultado.secure_url;
+  }
   function bloquear(valor) {
     ocupado=valor;
     document.querySelectorAll('#panelAdministracion button').forEach(b=>b.disabled=valor);
@@ -80,9 +95,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     $('tituloEditor').textContent=(registro?'Editar ':'Crear ')+(seccion==='usuarios'?'usuario':'producto');
     for(const [key,label,type,max] of esquemas[seccion]) {
       if((key==='password'&&registro)||(type==='readonly'&&!registro))continue;
-      const col=crear('div',type==='textarea'?'col-12':'col-md-6'),l=crear('label','form-label',label);l.htmlFor='campo_'+key;
+      const col=crear('div',type==='textarea'||type==='file'?'col-12':'col-md-6'),l=crear('label','form-label',label);l.htmlFor='campo_'+key;
       const input=crear(type==='textarea'?'textarea':type==='select'?'select':'input',type==='checkbox'?'form-check-input d-block':'form-control');input.id='campo_'+key;input.name=key;
       if(input.tagName==='INPUT')input.type=type==='readonly'?'text':type;
+      if(type==='file'){input.accept='image/jpeg,image/png,image/webp,image/gif';input.multiple=true;input.required=!registro?.imagenes?.length;}
       if(type==='select')for(const role of ['Invitado','Estudiante','Docente','Administrador']) {const option=crear('option','',role);input.append(option);}
       if(max)input.maxLength=max;
       if(type==='textarea')input.rows=key==='descripcion'?3:4;
@@ -91,19 +107,30 @@ document.addEventListener('DOMContentLoaded', async () => {
       if(type==='number'){input.min='0';input.max='100000000';input.step=key==='stock'?'1':'0.01';}
       if(key==='password'){input.minLength=6;input.autocomplete='new-password';}
       if(key==='id')input.pattern='[a-z0-9][a-z0-9-]*';
-      input.required=!['caracteristicas','disponible','uid','proveedor'].includes(key);
+      if(type!=='file')input.required=!['caracteristicas','disponible','uid','proveedor'].includes(key);
       if(type==='checkbox')input.checked=registro?registro[key]:true;
-      else input.value=Array.isArray(registro?.[key])?registro[key].join('\n'):registro?.[key]??(key==='rol'?'Invitado':type==='number'?'0':'');
-      col.append(l,input);$('camposEditor').append(col);
+      else if(type!=='file')input.value=Array.isArray(registro?.[key])?registro[key].join('\n'):registro?.[key]??(key==='rol'?'Invitado':type==='number'?'0':'');
+      col.append(l,input);
+      if(type==='file')col.append(crear('div','form-text',registro?.imagenes?.length?`Este producto ya tiene ${registro.imagenes.length} imagen(es). Si seleccionas archivos nuevos, reemplazarán las actuales.`:'Selecciona una o varias imágenes (JPG, PNG, WEBP o GIF). Se guardarán en Cloudinary.'));
+      $('camposEditor').append(col);
     }
     $('camposEditor').querySelector('input,textarea,select')?.focus();editor.scrollIntoView({behavior:'smooth',block:'nearest'});
   }
   editor.addEventListener('submit',async e=>{
     e.preventDefault();if(ocupado||!editor.reportValidity())return;
     const datos={revision:seleccionado?.revision};
-    for(const [key,,type] of esquemas[seccion]) {const input=$('campo_'+key);if(!input||type==='readonly')continue;datos[key]=type==='checkbox'?input.checked:type==='number'?Number(input.value):['imagenes','caracteristicas'].includes(key)?input.value.split('\n').map(v=>v.trim()).filter(Boolean):input.value;}
+    const archivosImagen=seccion==='productos'?Array.from($('campo_imagenes')?.files||[]):[];
+    for(const [key,,type] of esquemas[seccion]) {const input=$('campo_'+key);if(!input||type==='readonly'||type==='file')continue;datos[key]=type==='checkbox'?input.checked:type==='number'?Number(input.value):key==='caracteristicas'?input.value.split('\n').map(v=>v.trim()).filter(Boolean):input.value;}
+    if(seccion==='productos') {
+      if(archivosImagen.length>50){$('estadoEditor').textContent='Puedes cargar hasta 50 imágenes por producto.';return;}
+      if(archivosImagen.some(archivo=>!['image/jpeg','image/png','image/webp','image/gif'].includes(archivo.type)||archivo.size>10*1024*1024)){$('estadoEditor').textContent='Usa imágenes JPG, PNG, WEBP o GIF de hasta 10 MB cada una.';return;}
+      datos.imagenes=seleccionado?.imagenes||[];
+    }
     const actual=version;bloquear(true);$('estadoEditor').textContent='Guardando…';
-    try {await api(seleccionado?'PUT':'POST',seleccionado?.id,datos);if(actual!==version)return;editor.reset();await cargar('Cambios guardados correctamente.');}
+    try {
+      if(archivosImagen.length){$('estadoEditor').textContent=`Subiendo ${archivosImagen.length} imagen(es) a Cloudinary…`;datos.imagenes=await Promise.all(archivosImagen.map(subirImagenCloudinary));}
+      await api(seleccionado?'PUT':'POST',seleccionado?.id,datos);if(actual!==version)return;editor.reset();await cargar('Cambios guardados correctamente.');
+    }
     catch(e){if(actual===version){error(e,$('estadoEditor'));bloquear(false);}}
   });
   async function eliminar(registro) {
