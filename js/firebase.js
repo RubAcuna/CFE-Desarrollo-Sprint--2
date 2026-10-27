@@ -312,8 +312,21 @@ export async function consultarEstadisticasAdministracion() {
     visitas.set(id, anterior);
   });
   const vendidos = new Map(); let unidadesVendidas = 0, ingresosKits = 0;
+  const ventas = [];
   comprasSnapshot.docs.forEach(documento => {
     const compra = documento.data();
+    let totalVenta = Number.isFinite(compra.total) ? compra.total : 0;
+    const lineasVenta = Object.values(compra.productos || {}).map(item => {
+      const cantidad = Number.isSafeInteger(item.cantidad) && item.cantidad > 0 ? item.cantidad : 0;
+      const subtotal = Number.isFinite(item.subtotal) ? item.subtotal : (Number(item.precio) || 0) * cantidad;
+      if (!Number.isFinite(compra.total)) totalVenta += subtotal;
+      return { nombre: String(item.nombre || productos.get(String(item.id || ''))?.nombre || item.id || 'Kit'), cantidad };
+    }).filter(item => item.cantidad > 0);
+    ventas.push({
+      id: String(compra.id || documento.id), fecha: compra.fecha || null,
+      productos: lineasVenta, total: totalVenta, medioPago: String(compra.medioPago || '—'),
+      estado: String(compra.estado || 'confirmada')
+    });
     Object.values(compra.productos || {}).forEach(item => {
       const id = String(item.id || ''), nombre = String(item.nombre || productos.get(id)?.nombre || id || 'Kit');
       const cantidad = Number.isSafeInteger(item.cantidad) && item.cantidad > 0 ? item.cantidad : 0;
@@ -324,8 +337,10 @@ export async function consultarEstadisticasAdministracion() {
       anterior.cantidad += cantidad; anterior.ingresos += subtotal; vendidos.set(id, anterior);
     });
   });
+  ventas.sort((a, b) => (b.fecha?.toMillis?.() || Date.parse(b.fecha || '') || 0) - (a.fecha?.toMillis?.() || Date.parse(a.fecha || '') || 0));
   return {
     administrador,
+    ventas,
     kits: {
       visitasTotal,
       visitasHoy,

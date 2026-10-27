@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     editor.querySelectorAll('input,textarea,select').forEach(e=>e.disabled=valor || (e.id==='campo_rol' && seleccionado?.id===administrador));
     if(!valor&&seccion!=='estadisticas') mostrar();
   }
-  function limpiar() { registros=[];seleccionado=null;administrador=null;panel.hidden=true;editor.hidden=true;$('camposEditor').replaceChildren();$('listaRegistros').replaceChildren();$('resumenEstadisticas').replaceChildren();$('kitsVisitados').replaceChildren();$('kitsVendidos').replaceChildren(); }
+  function limpiar() { registros=[];seleccionado=null;administrador=null;panel.hidden=true;editor.hidden=true;$('camposEditor').replaceChildren();$('listaRegistros').replaceChildren();$('resumenEstadisticas').replaceChildren();$('graficaKitsVisitados').replaceChildren();$('graficaKitsVendidos').replaceChildren();$('graficaIngresosKits').replaceChildren();$('tablaVentasCronologicas').replaceChildren(); }
   // El SDK usa la sesión actual y las reglas de Firestore, sin servidor propio.
   async function api(method='GET',id='',datos) { return servicio.administrar(seccion,method,id,datos); }
   function error(e,destino=estado) {
@@ -55,6 +55,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   const numero=valor=>new Intl.NumberFormat('es-UY').format(valor||0);
   const dinero=valor=>new Intl.NumberFormat('es-UY',{style:'currency',currency:'UYU',maximumFractionDigits:2}).format(valor||0);
+  function fechaHora(valor) {
+    let fecha;
+    try { fecha=valor?.toDate?.() || (valor instanceof Date?valor:new Date(valor)); } catch {}
+    return fecha&&!Number.isNaN(fecha.getTime())?new Intl.DateTimeFormat('es-UY',{dateStyle:'short',timeStyle:'short'}).format(fecha):'Fecha no disponible';
+  }
   function tabla(contenedor,encabezados,filas,vacio) {
     contenedor.replaceChildren();
     if(!filas.length){contenedor.append(crear('p','mb-0',vacio));return;}
@@ -62,15 +67,33 @@ document.addEventListener('DOMContentLoaded', async () => {
     encabezados.forEach(texto=>{const th=document.createElement('th');th.scope='col';th.textContent=texto;tr.append(th);});thead.append(tr);table.append(thead);
     const tbody=document.createElement('tbody');filas.forEach(fila=>{const row=document.createElement('tr');fila.forEach(valor=>{const td=document.createElement('td');td.textContent=valor;row.append(td);});tbody.append(row);});table.append(tbody);responsive.append(table);contenedor.append(responsive);
   }
-  // Representa las visitas a fichas de kits y las unidades de compras confirmadas.
+  function graficaBarras(contenedor,items,metrica,formatear,etiquetaVacia) {
+    contenedor.replaceChildren();
+    const principales=items.slice(0,5), maximo=Math.max(1,...principales.map(item=>Number(item[metrica])||0));
+    if(!principales.length) { contenedor.append(crear('li','estadistica-sin-datos',etiquetaVacia));return; }
+    principales.forEach(item=>{
+      const valor=Number(item[metrica])||0, fila=crear('li','estadistica-barra-item'), meta=crear('div','estadistica-barra-meta'), nombre=crear('span','estadistica-barra-nombre',item.nombre), total=crear('strong','estadistica-barra-valor',formatear(valor));
+      const medidor=crear('div','estadistica-barra-medidor'), barra=crear('span','estadistica-barra-relleno');
+      medidor.setAttribute('role','meter');medidor.setAttribute('aria-label',`${item.nombre}: ${formatear(valor)}`);medidor.setAttribute('aria-valuemin','0');medidor.setAttribute('aria-valuemax',String(maximo));medidor.setAttribute('aria-valuenow',String(valor));
+      barra.style.width=`${Math.max(0,Math.min(100,valor/maximo*100))}%`;barra.setAttribute('aria-hidden','true');medidor.append(barra);meta.append(nombre,total);fila.append(meta,medidor);contenedor.append(fila);
+    });
+  }
+  // Resume las visitas a kits y las ventas confirmadas con comparaciones visuales.
   function mostrarEstadisticas(datos) {
     const resumen=$('resumenEstadisticas');resumen.replaceChildren();
+    const porIngresos=[...datos.kits.vendidos].sort((a,b)=>b.ingresos-a.ingresos||a.nombre.localeCompare(b.nombre,'es'));
+    const mayorIngreso=porIngresos[0];
     [
       ['Visitas a kits',numero(datos.kits.visitasTotal)],['Visitas de hoy',numero(datos.kits.visitasHoy)],
-      ['Kits vendidos',numero(datos.kits.vendidosTotal)],['Ingresos por kits',dinero(datos.kits.ingresos)]
+      ['Kits vendidos',numero(datos.kits.vendidosTotal)],['Ingresos por kits',dinero(datos.kits.ingresos)],
+      ['Kit con más ingresos',mayorIngreso?`${mayorIngreso.nombre} · ${dinero(mayorIngreso.ingresos)}`:'Sin ventas']
     ].forEach(([titulo,valor])=>{const card=crear('article','estadistica-card'),etiqueta=crear('p','mb-2',titulo),dato=crear('strong','estadistica-valor',valor);card.append(etiqueta,dato);resumen.append(card);});
-    tabla($('kitsVisitados'),['Kit','Visitas'],datos.kits.visitados.map(item=>[item.nombre,numero(item.cantidad)]),'Todavía no hay kits visitados.');
-    tabla($('kitsVendidos'),['Kit','Unidades','Ingresos'],datos.kits.vendidos.map(item=>[item.nombre,numero(item.cantidad),dinero(item.ingresos)]),'Todavía no hay kits vendidos.');
+    graficaBarras($('graficaKitsVisitados'),datos.kits.visitados,'cantidad',numero,'Todavía no hay kits visitados.');
+    graficaBarras($('graficaKitsVendidos'),datos.kits.vendidos,'cantidad',numero,'Todavía no hay kits vendidos.');
+    graficaBarras($('graficaIngresosKits'),porIngresos,'ingresos',dinero,'Todavía no hay ingresos por kit.');
+    tabla($('tablaVentasCronologicas'),['Fecha y hora','Venta','Kits','Medio de pago','Total'],datos.ventas.map(venta=>[
+      fechaHora(venta.fecha),'#'+venta.id,venta.productos.map(item=>`${item.nombre} × ${numero(item.cantidad)}`).join(', ')||'Sin detalle',venta.medioPago,dinero(venta.total)
+    ]),'Todavía no hay ventas confirmadas.');
     $('estadoEstadisticas').textContent='Estadísticas actualizadas.';
   }
   function mostrar() {

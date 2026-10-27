@@ -1003,5 +1003,18 @@ article:hover {
 .estadistica-card { padding: 1.25rem; border-top: 4px solid #00bde7; }
 .estadistica-card:nth-child(3n) { border-top-color: #ec0aa6; }
 .estadistica-valor { display: block; color: #06195c; font-size: clamp(1.45rem, 4vw, 2rem); overflow-wrap: anywhere; }
+.estadistica-card:last-child { border-top-color: #ec0aa6; }
+.estadistica-card:last-child .estadistica-valor { font-size: clamp(1rem, 2vw, 1.3rem); }
 .estadisticas-panel { height: 100%; padding: 1.25rem; }
 .estadisticas-panel .table { --bs-table-bg: #14213d; --bs-table-striped-bg: #1d2c4b; }
+.estadisticas-grafica { display: grid; gap: 1.2rem; margin: 1.35rem 0 0; padding: 0; list-style: none; }
+.estadistica-barra-item { min-width: 0; }
+.estadistica-barra-meta { display: flex; align-items: baseline; justify-content: space-between; gap: .75rem; margin-bottom: .45rem; }
+.estadistica-barra-nombre { min-width: 0; color: #14213d; font-weight: 600; overflow-wrap: anywhere; }
+.estadistica-barra-valor { flex: 0 0 auto; color: #06195c; font-variant-numeric: tabular-nums; }
+.estadistica-barra-medidor { height: .7rem; overflow: hidden; border-radius: 999px; background: #e8edf7; }
+.estadistica-barra-relleno { display: block; height: 100%; min-width: .2rem; border-radius: inherit; background: linear-gradient(90deg, #00bde7, #6054c7); transition: width .35s ease; }
+#graficaKitsVendidos .estadistica-barra-relleno { background: linear-gradient(90deg, #6054c7, #ec0aa6); }
+#graficaIngresosKits .estadistica-barra-relleno { background: linear-gradient(90deg, #00bde7, #ec0aa6); }
+.estadistica-sin-datos { color: #596579; }
+@media (prefers-reduced-motion: reduce) { .estadistica-barra-relleno { transition: none; } }
