@@ -367,6 +367,8 @@ export async function listarPedidosAdministracion() {
     })).filter(item => item.cantidad > 0);
     return {
       id: documento.id, fecha: compra.fecha || null, estado: String(compra.estado || ''),
+      usuarioEmail: String(compra.usuarioEmail || ''),
+      nombreCliente: String(compra.facturacion?.nombreCompleto || envio.nombreCompleto || ''),
       total: Number.isFinite(compra.total) ? compra.total : 0, medioPago: String(compra.medioPago || '—'),
       productos,
       datosEnvio: {
