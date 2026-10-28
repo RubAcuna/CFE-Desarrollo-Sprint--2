@@ -37,7 +37,7 @@ Tienda web de kits y componentes de robótica educativa para que estudiantes, do
 Se deben usar cuentas dedicadas exclusivamente a la evaluación. Los identificadores confirmados son:
 
 - **Administradora:** `rubenadmin@robotech.com`
-- **Cliente:** pendiente de recibir el identificador.
+- **Cliente:** `maria@gmail.com`.
 
 Las contraseñas y demás credenciales se compartirán por un canal privado, nunca en este README.
 
