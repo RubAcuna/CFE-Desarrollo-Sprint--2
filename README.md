@@ -34,7 +34,12 @@ Tienda web de kits y componentes de robótica educativa para que estudiantes, do
 
 ## Cuentas de evaluación
 
-Se deben usar cuentas dedicadas a la evaluación, una con rol cliente y otra con rol administrador. **Los identificadores de ambas cuentas están pendientes de confirmación.** Las contraseñas y demás datos de acceso se compartirán por un canal privado, nunca en este README.
+Se deben usar cuentas dedicadas exclusivamente a la evaluación. Los identificadores confirmados son:
+
+- **Administradora:** `rubenadmin@robotech.com`
+- **Cliente:** pendiente de recibir el identificador.
+
+Las contraseñas y demás credenciales se compartirán por un canal privado, nunca en este README.
 
 ## Limitaciones conocidas
 
