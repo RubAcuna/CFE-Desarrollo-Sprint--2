@@ -104,9 +104,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     $('estadoEstadisticas').textContent='Estadísticas actualizadas.';
   }
   function mostrarPedidos() {
-    const lista=$('listaPedidos');lista.replaceChildren();$('cantidadPedidos').textContent=`${numero(pedidos.length)} pedido(s)`;
-    if(!pedidos.length){lista.append(crear('p','', 'No hay pedidos registrados.'));return;}
-    pedidos.forEach(pedido=>{
+    const lista=$('listaPedidos'), consulta=normalizar($('buscarPedido').value.trim());lista.replaceChildren();
+    const resultados=pedidos.filter(pedido=>!consulta||normalizar([
+      pedido.id,pedido.datosEnvio?.nombreCompleto,pedido.datosEnvio?.telefono,pedido.datosEnvio?.direccion,
+      pedido.datosEnvio?.ciudad,pedido.datosEnvio?.departamento,pedido.envioEstado,pedido.envioTransportista,
+      pedido.envioSeguimiento,pedido.envioNotas,pedido.medioPago,fechaHora(pedido.fecha),
+      ...(pedido.productos||[]).map(item=>item.nombre)
+    ].join(' ')).includes(consulta));
+    $('cantidadPedidos').textContent=`${numero(resultados.length)} de ${numero(pedidos.length)} pedido(s)`;
+    if(!resultados.length){lista.append(crear('p','', pedidos.length?'No hay pedidos que coincidan con la búsqueda.':'No hay pedidos registrados.'));return;}
+    resultados.forEach(pedido=>{
       const card=crear('article','admin-usuario'),info=crear('div','admin-usuario-datos'),acciones=crear('div','d-flex flex-wrap gap-2');
       const productos=pedido.productos.map(item=>`${item.nombre} × ${numero(item.cantidad)}`).join(', ')||'Sin detalle de productos';
       info.append(crear('h3','h5',`Pedido #${pedido.id}`),crear('p','mb-1',`${pedido.datosEnvio.nombreCompleto||'Cliente'} · ${fechaHora(pedido.fecha)}`),crear('p','mb-1',productos),crear('p','mb-0',`${dinero(pedido.total)} · Envío: ${pedido.envioEstado}`));
@@ -202,7 +209,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   $('buscarRegistro').addEventListener('input',mostrar);$('filtroRol').addEventListener('change',mostrar);$('nuevoRegistro').addEventListener('click',()=>abrir());
   $('cancelarRegistro').addEventListener('click',()=>{editor.reset();editor.hidden=true;seleccionado=null;$('nuevoRegistro').focus();});
   $('actualizarEstadisticas').addEventListener('click',()=>cargar());
-  $('actualizarPedidos').addEventListener('click',()=>cargar());
+  $('buscarPedido').addEventListener('input',mostrarPedidos);$('actualizarPedidos').addEventListener('click',()=>cargar());
   $('cancelarEnvio').addEventListener('click',()=>{editorEnvio.reset();editorEnvio.hidden=true;pedidoSeleccionado=null;$('estadoEditorEnvio').textContent='';});
   editorEnvio.addEventListener('submit',async e=>{
     e.preventDefault();if(ocupado||!pedidoSeleccionado||!editorEnvio.reportValidity())return;
