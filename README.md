@@ -1,204 +1,45 @@
-Robotech
+# Robotech
 
-Slogan: "Construimos el futuro, activamos tu potencial."
+Tienda web de kits y componentes de robótica educativa para que estudiantes, docentes y familias aprendan creando proyectos.
 
-# Descripción del proyecto
+**Sitio publicado:** https://rubacuna.github.io/CFE-Desarrollo-Sprint--2/
 
-Robotech es una tienda en línea especializada en kits, componentes y recursos educativos de robótica y programación. Su objetivo es facilitar el acceso a herramientas tecnológicas que permitan aprender mediante la experimentación, la construcción y la resolución de problemas.
+## Funcionalidades principales
 
-# Nombre de la tienda
+- Catálogo con búsqueda, filtros, fichas de producto, carrito y control de stock.
+- Registro e inicio de sesión con correo y contraseña o Google.
+- Compras confirmadas, historial de compras propio y reseñas de productos.
+- Panel administrativo con gestión de productos, usuarios, pedidos y estadísticas de visitas y ventas.
 
-Robotech
+## Tecnologías y servicios
 
-El nombre combina los conceptos de robótica y tecnología. Es breve, fácil de recordar y representa claramente la actividad principal de la tienda.
+- HTML, CSS, JavaScript y Bootstrap 5.
+- Firebase Authentication para las sesiones y Firebase Firestore para los perfiles, productos, pedidos y reseñas.
+- Cloudinary para almacenar imágenes cargadas desde el panel de productos.
+- GitHub Pages para publicar el sitio estático.
 
-# Temática del e-commerce
+## Roles
 
-La tienda estará dedicada a la "robótica educativa, la electrónica y la programación". El sitio ofrecerá productos para aprender, crear prototipos y desarrollar proyectos tecnológicos desde un nivel inicial hasta uno avanzado.
+- **Visitante:** puede recorrer el catálogo; debe iniciar sesión para confirmar una compra.
+- **Invitado:** inicia sesión con Google y puede usar las funciones de cliente asociadas a su propia cuenta.
+- **Estudiante y Docente:** perfiles registrados con correo; pueden gestionar su perfil, comprar, consultar sus compras y publicar sus reseñas. El rol identifica el perfil y no concede permisos administrativos.
+- **Administrador:** puede utilizar las operaciones de administración descritas abajo.
 
-# Productos
+## Operaciones del administrador
 
-Robotech ofrecerá inicialmente:
+- Crear y editar usuarios y asignar roles; eliminar perfiles de Firestore. Esto no elimina las cuentas de Firebase Authentication.
+- Crear, editar y eliminar productos, incluido el stock, la disponibilidad y las imágenes.
+- Consultar pedidos confirmados y actualizar su estado logístico, transportista, número de seguimiento y notas. El pago y el importe del pedido no se pueden modificar desde el panel.
+- Consultar estadísticas de visitas, kits vendidos, ingresos por kit y ventas cronológicas.
 
-- Kits de robótica educativa.
-- Kits compatibles con Arduino, micro:bit, Raspberry Pi y ESP32.
-- Kits modulares de construcción tipo SPIKE y EV3.
-- Robots programables.
-- Sensores, motores, servomotores y controladores.
-- Placas de desarrollo y módulos electrónicos.
-- Cables, protoboards, baterías y accesorios.
-- Materiales y recursos para cursos de robótica.
+## Cuentas de evaluación
 
-# Público objetivo
+Se deben usar cuentas dedicadas a la evaluación, una con rol cliente y otra con rol administrador. **Los identificadores de ambas cuentas están pendientes de confirmación.** Las contraseñas y demás datos de acceso se compartirán por un canal privado, nunca en este README.
 
-La tienda está dirigida a:
+## Limitaciones conocidas
 
-- Docentes, Educadores,  colegios, liceos e  interesados en tecnología.
-- Estudiantes de educación técnica y universitaria.
-- Familias que buscan experiencias educativas prácticas.
-- Personas aficionadas a la electrónica y al movimiento *maker*.
-- Principiantes que desean aprender programación y robótica.
-- Usuarios avanzados que desarrollan prototipos y proyectos de IoT.
-
-# Estilo de comunicación
-
-La comunicación de Robotech será:
-
-- Clara, cercana y motivadora.
-- Educativa, sin utilizar tecnicismos innecesarios.
-- Dinámica y orientada a la acción.
-- Inclusiva para personas con distintos niveles de experiencia.
-- Enfocada en crear, programar, experimentar y aprender.
-
-Ejemplos de mensajes:
-
-- “Crea, programa, transforma.”
-- “Convierte tus ideas en proyectos reales.”
-- “Aprende robótica construyendo.”
-- “Construimos el futuro, activamos tu potencial.”
-
-# Colores principales
-
-| Color | Código | Aplicación |
-
-| Azul marino | `#06195C` | Logotipo, títulos y fondos destacados |
-| Cian eléctrico | `#00BDE7` | Botones, enlaces y elementos tecnológicos |
-| Magenta | `#EC0AA6` | Acentos, llamadas a la acción y detalles visuales |
-| Blanco | `#FFFFFF` | Fondo principal y espacios de descanso visual |
-| Gris claro | `#F3F6FC` | Secciones secundarias, tarjetas y formularios |
-| Gris de texto | `#667085` | Párrafos y textos complementarios |
-
-# Tipografías
-
-- **Títulos:** Montserrat, en pesos 700 u 800.
-- **Textos y controles:** Inter, en pesos 400, 500 y 600.
-- **Alternativas del sistema:** Arial, Helvetica y sans-serif.
-
-Las tipografías seleccionadas ofrecen una apariencia moderna, tecnológica y legible en computadoras y dispositivos móviles.
-
-# Logotipo e identificación visual
-
-La identificación visual utiliza la palabra "Robotech" en azul marino, con detalles en cian y magenta. La marca también cuenta con un robot azul de cuatro ruedas como mascota.
-
-La identidad debe conservar:
-
-- Formas geométricas y detalles inspirados en circuitos.
-- Fondos limpios y composiciones con suficiente espacio.
-- Uso consistente del azul, cian y magenta.
-- Fotografías o ilustraciones claras de los productos.
-- Botones y llamadas a la acción con alto contraste.
-
-# Categorías iniciales
-
-1. Kits Arduino
-2. Kits micro:bit
-3. Kits Raspberry Pi
-4. Kits ESP32 e IoT
-5. Kits SPIKE y EV3
-6. Robots y autos programables
-7. Sensores y módulos
-8. Motores y movimiento
-9. Placas y componentes
-10. Accesorios y herramientas
-11. Cursos y recursos educativos
-
-# Objetivo de la tienda
-
-Robotech busca convertirse en un punto de encuentro para estudiantes, docentes y creadores. La tienda no solo venderá productos: también ayudará a sus clientes a elegir el kit adecuado, comprender sus posibilidades y comenzar a desarrollar proyectos propios.
-
-# Acceso y perfiles de Robotech
-
-- `js/firebase.js`: conexión compartida, Firebase Authentication y operaciones de Firestore.
-- `js/login.js`: modal de acceso, registro, Google, sesión persistente y cierre de sesión.
-- `js/perfil.js`: consulta del perfil autenticado y actualización del nombre de usuario.
-- `firestore.rules`: cada usuario puede leer su propio documento y modificar su nombre, sin cambiar su rol.
-
-## Modelo de datos
-
-Cada cuenta guarda el perfil en `usuarios/{uid}`, donde `uid` es el identificador de Firebase Authentication. Los campos son `usuario`, `email`, `rol`, `uid`, `proveedor`, `creadoEn` y `ultimoAcceso`.
-
-La contraseña se envía exclusivamente a Firebase Authentication. No se guarda `passwd` en Firestore.
-
-El registro admite Estudiante, Docente e Invitado. Google crea perfiles Invitado. El responsable puede asignar Administrador desde la consola de Firebase en el documento correspondiente al UID; el registro público no puede conceder ese rol. Una cuenta Administrador puede asignarlo desde el panel de administración cuando sus reglas estén publicadas. Los roles guardados no conceden por sí solos permisos sobre otros recursos: cada recurso requiere reglas propias.
-
-
-
-
-
-## Usuarios  en Firestore
-Admin: rubenadmin@robotech.com
-passwd: ruben1234
-
-Los demas roles 
-Estudiante y docente se gestionan desde el  registro
-el usuario invitado es únicamente quen inicia sesion con botón Google
-
-
-
-
-
-## Catálogo en Firestore
-
-La colección pública es `productos` en `robotech-8afa0`. El identificador del documento es la referencia usada en los enlaces (por ejemplo, `arduino`). Cada documento contiene:
-
-- `nombre`, `descripcion` y `categoria`: texto.
-- `precio`: número en UYU; `stock`: entero no negativo.
-- `disponible`: booleano.
-- `imagenes`: lista de rutas del proyecto (`img/…`) o URLs HTTPS; la primera se usa en tarjetas.
-- `caracteristicas`: lista de textos, mostrada en la ficha si contiene elementos.
-
-La carga inicial de nueve kits está documentada en `datos/productos-iniciales.json`. Conserva el stock de ejemplo de 10 unidades; las características están vacías hasta incorporar especificaciones verificadas. Este archivo no se usa como respaldo en la tienda: los datos mostrados proceden de Firestore.
-
-Inicio, catálogo, ficha y carrito comparten las consultas de `js/productos.js`, a través de `js/firebase.js`. La búsqueda, los filtros por categoría y disponibilidad y los cuatro órdenes se aplican a los productos recuperados. Las consultas fallidas muestran un aviso y permiten reintentar.
-
-Antes de agregar o cambiar cantidades se consulta nuevamente el inventario del servidor. Las unidades del carrito no reservan inventario: el descuento definitivo se realiza al confirmar la compra mediante una transacción de Firestore.
-
-Las reglas permiten consultar el catálogo públicamente y reservan las escrituras de productos y la administración de perfiles a usuarios con rol Administrador.
-
-Pruebas de integración con servicio simulado: `node tests/firestore.test.cjs`. Cubren consultas, reintentos, catálogo vacío, documento inexistente, búsqueda, orden, stock vigente, errores y operaciones concurrentes. Servir el proyecto por HTTP para probarlo contra Firebase.
-
-
-## Administración mediante Firebase SDK
-
-GitHub Pages sirve los archivos estáticos. El navegador usa Firebase Authentication y consulta directamente las colecciones productos y usuarios de robotech-8afa0 mediante el SDK web. No requiere Node, iniciar.ps1 ni credenciales administrativas privadas.
-
-- js/administracion.js: pestañas y formularios.
-- js/firebase.js: altas, consultas, modificaciones y bajas con transacciones y detección de cambios simultáneos.
-- firestore.rules: autorización en Firebase por el rol del perfil autenticado; las comprobaciones del navegador no sustituyen estas reglas.
-
-Productos: edición de nombre, descripción, categoría, precio, stock, disponibilidad, imágenes y características.
-
-Pedidos: la pestaña consulta las compras confirmadas ordenadas por fecha y permite actualizar únicamente el estado logístico, transportista, seguimiento y notas. El pedido, el pago y el importe permanecen inmutables; no se cancelan pedidos ni se procesan reembolsos desde el panel.
-
-Usuarios: las altas crean una cuenta de Authentication mediante una aplicación secundaria con sesión en memoria, conservando la sesión del administrador, y guardan usuarios/{uid}. Si falla el perfil se intenta retirar la cuenta recién creada. Se editan nombre y rol; correo y operaciones sobre cuentas existentes se gestionan en la consola Authentication.
-
-Eliminar un perfil solo elimina el documento de Firestore: no elimina ni bloquea la cuenta de Authentication. Al volver a iniciar sesión puede regenerarse como Invitado. La interfaz advierte esta diferencia. El administrador no puede borrar su propio perfil ni quitarse su rol.
-
-Publicar firestore.rules en Firebase antes de usar esta versión, incluidas las reglas que permiten al administrador modificar solo los campos logísticos de una compra confirmada. El dominio rubacuna.github.io debe estar autorizado en Authentication. No subir claves privadas al repositorio.
-
-Pruebas simuladas: node tests/administracion.test.cjs, node tests/administracion-sdk.test.cjs y node tests/firestore.test.cjs. No modifican datos de producción.
-
-## Compra y checkout
-
-`finalizar-compra.html` presenta el resumen de productos, los datos de facturación y envío y los medios de pago eBROU y Mercado Pago. Solo un usuario autenticado puede confirmar. La selección del medio de pago queda registrada, pero el sitio no ejecuta un cobro externo.
-
-Los archivos JavaScript se organizan así:
-
-- `js/carrito.js` conserva localmente identificadores y cantidades, y dirige al checkout.
-- `js/finalizar-compra.js` controla el formulario, la sesión y la confirmación visual.
-- `js/firebase.js` centraliza Authentication, consultas de Firestore y la transacción de compra.
-- `js/login.js` registra usuarios con correo y contraseña o Google y mantiene el perfil en `usuarios/{uid}`.
-
-La confirmación crea `compras/{id}` con fecha y hora del servidor, usuario, productos, total, pago, facturación y envío. En la misma transacción vuelve a leer cada producto, valida la cantidad y descuenta el stock. Si falta inventario, cambia la sesión o falla una escritura, Firestore revierte toda la operación. Al llegar a cero actualiza `disponible` a `false`. Las reglas bloquean las modificaciones del pedido y del pago; solo el administrador puede actualizar los campos de logística definidos por el panel.
-
-## Mis productos y reseñas
-
-La pantalla `perfil.html` consulta `compras` con el UID autenticado y agrupa los productos confirmados para mostrar cantidades, número de pedidos y fecha de la compra más reciente. Las reglas exigen que la consulta incluya el UID, de modo que un usuario no puede recuperar pedidos ajenos.
-
-En `producto.html`, `js/comentarios.js` muestra las reseñas públicas y permite que una persona autenticada publique, actualice o elimine su propia reseña. Los documentos se guardan en `comentarios/{productoId}_{uid}` con producto, UID, nombre tomado del perfil, calificación, texto y fechas del servidor. Las reglas impiden suplantar el autor, comentar productos inexistentes o modificar la reseña de otra cuenta.
-
-## Estadísticas administrativas
-
-La pestaña **Estadísticas** de `admin.html` reúne kits visitados y kits vendidos. Al abrir el detalle de un producto, `js/producto.js` registra como máximo una visita anónima por kit, pestaña y día en la colección `vistas`; el documento contiene `pagina`, `productoId`, `fecha` y la marca de tiempo del servidor. No se guardan UID, correos, direcciones IP ni datos del dispositivo. Las reglas comprueban que el producto exista, permiten crear estas métricas públicamente y reservan su lectura al rol Administrador.
-
-Las ventas no se duplican en otra colección: `js/firebase.js` las calcula desde `compras` y agrupa todos los productos confirmados. El panel muestra visitas totales y del día a fichas de kits, cantidad de visitas por kit, unidades vendidas e ingresos por kit.
+- El checkout registra el pedido y el medio de pago elegido; no procesa cobros reales.
+- El seguimiento del envío se actualiza manualmente y no está conectado a servicios de transportistas.
+- El sitio es estático: Authentication y Firestore dependen de la configuración y las reglas de Firebase, y de que GitHub Pages esté autorizado como dominio.
+- Eliminar un perfil desde el panel no elimina ni bloquea la cuenta de Authentication.
+- Los datos de productos e inventario dependen de Firestore; el archivo de productos iniciales es de ejemplo.
