@@ -106,7 +106,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   function mostrarPedidos() {
     const lista=$('listaPedidos'), consulta=normalizar($('buscarPedido').value.trim());lista.replaceChildren();
     const resultados=pedidos.filter(pedido=>!consulta||normalizar([
-      pedido.id,pedido.datosEnvio?.nombreCompleto,pedido.datosEnvio?.telefono,pedido.datosEnvio?.direccion,
+      `Pedido #${pedido.id}`,pedido.id,pedido.usuarioEmail,pedido.nombreCliente,
+      pedido.datosEnvio?.nombreCompleto,pedido.datosEnvio?.telefono,pedido.datosEnvio?.direccion,
       pedido.datosEnvio?.ciudad,pedido.datosEnvio?.departamento,pedido.envioEstado,pedido.envioTransportista,
       pedido.envioSeguimiento,pedido.envioNotas,pedido.medioPago,fechaHora(pedido.fecha),
       ...(pedido.productos||[]).map(item=>item.nombre)
@@ -219,5 +220,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     catch(e){if(actual===version){error(e,$('estadoEditorEnvio'));bloquear(false);}}
   });
   $('accesoAdministracion').addEventListener('click',()=>$('btnLoginPlaceholder').click());
-  try {servicio=await import('./firebase.js?v=pedidos-20261027');servicio.observarSesion(()=>{++version;limpiar();cargar();});}catch(e){error(e);}
+  try {servicio=await import('./firebase.js?v=busqueda-pedidos-20261028');servicio.observarSesion(()=>{++version;limpiar();cargar();});}catch(e){error(e);}
 });
