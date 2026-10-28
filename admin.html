@@ -80,6 +80,10 @@
               <button id="actualizarPedidos" class="btn btn-robotech" type="button">Actualizar pedidos</button>
             </div>
             <p id="estadoPedidos" role="status" aria-live="polite"></p>
+            <div class="mb-3">
+              <label for="buscarPedido" class="form-label">Buscar pedidos</label>
+              <input id="buscarPedido" type="search" class="form-control" aria-controls="listaPedidos" placeholder="Número, cliente, producto o envío" autocomplete="off">
+            </div>
             <p id="cantidadPedidos" role="status"></p>
             <div id="listaPedidos" class="d-grid gap-3"></div>
             <form id="editorEnvio" class="checkout mt-4" hidden>
