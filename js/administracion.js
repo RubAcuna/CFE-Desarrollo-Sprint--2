@@ -3,8 +3,8 @@
 document.addEventListener('DOMContentLoaded', async () => {
   const $ = id => document.getElementById(id);
   const panel=$('panelAdministracion'), estado=$('estadoAdministracion'), editor=$('editorRegistro');
-  const gestion=$('gestionRegistros'), estadisticas=$('estadisticasAdministracion');
-  let servicio, seccion='usuarios', registros=[], seleccionado=null, administrador=null, version=0, ocupado=false;
+  const gestion=$('gestionRegistros'), estadisticas=$('estadisticasAdministracion'), pedidosPanel=$('pedidosAdministracion'), editorEnvio=$('editorEnvio');
+  let servicio, seccion='usuarios', registros=[], pedidos=[], pedidoSeleccionado=null, seleccionado=null, administrador=null, version=0, ocupado=false;
   const esquemas={
     usuarios:[['usuario','Nombre','text',80],['email','Correo electrónico','email',254],['rol','Rol','select'],['password','Contraseña inicial','password',128],['uid','UID','readonly'],['proveedor','Método de acceso','readonly']],
     productos:[['id','ID (minúsculas, números y guiones)','text',80],['nombre','Nombre','text',150],['descripcion','Descripción','textarea',5000],['categoria','Categoría','text',100],['precio','Precio (UYU)','number'],['stock','Stock','number'],['disponible','Disponible para la venta','checkbox'],['imagenes','Cargar imágenes desde el dispositivo','file'],['caracteristicas','Características, una por línea (opcional)','textarea',100000]]
@@ -30,27 +30,34 @@ document.addEventListener('DOMContentLoaded', async () => {
     ocupado=valor;
     document.querySelectorAll('#panelAdministracion button').forEach(b=>b.disabled=valor);
     editor.querySelectorAll('input,textarea,select').forEach(e=>e.disabled=valor || (e.id==='campo_rol' && seleccionado?.id===administrador));
-    if(!valor&&seccion!=='estadisticas') mostrar();
+    editorEnvio.querySelectorAll('input,textarea,select').forEach(e=>e.disabled=valor);
+    if(!valor&&seccion==='pedidos') mostrarPedidos();
+    else if(!valor&&seccion!=='estadisticas') mostrar();
   }
-  function limpiar() { registros=[];seleccionado=null;administrador=null;panel.hidden=true;editor.hidden=true;$('camposEditor').replaceChildren();$('listaRegistros').replaceChildren();$('resumenEstadisticas').replaceChildren();$('graficaKitsVisitados').replaceChildren();$('graficaKitsVendidos').replaceChildren();$('graficaIngresosKits').replaceChildren();$('tablaVentasCronologicas').replaceChildren(); }
+  function limpiar() { registros=[];pedidos=[];pedidoSeleccionado=null;seleccionado=null;administrador=null;panel.hidden=true;editor.hidden=true;editorEnvio.hidden=true;$('camposEditor').replaceChildren();$('listaRegistros').replaceChildren();$('listaPedidos').replaceChildren();$('cantidadPedidos').textContent='';$('resumenEstadisticas').replaceChildren();$('graficaKitsVisitados').replaceChildren();$('graficaKitsVendidos').replaceChildren();$('graficaIngresosKits').replaceChildren();$('tablaVentasCronologicas').replaceChildren(); }
   // El SDK usa la sesión actual y las reglas de Firestore, sin servidor propio.
   async function api(method='GET',id='',datos) { return servicio.administrar(seccion,method,id,datos); }
   function error(e,destino=estado) {
-    destino.textContent=e.code==='permission-denied'?'No tienes permiso para esta operación. Comprueba el rol y las reglas de Firestore.':e.code==='auth/email-already-in-use'?'Ya existe una cuenta con ese correo.':e.message || 'No se pudo completar la operación.';
-    if([401,403].includes(e.status)||['admin/sin-sesion','admin/sin-permiso','permission-denied'].includes(e.code)) {limpiar();estado.textContent=destino.textContent;$('accesoAdministracion').hidden=e.code!=='admin/sin-sesion'&&e.status!==401;}
+    const mensaje=e.code==='permission-denied'?'No tienes permiso para esta operación. Comprueba el rol y las reglas de Firestore.':e.code==='auth/email-already-in-use'?'Ya existe una cuenta con ese correo.':e.message || 'No se pudo completar la operación.';
+    destino.textContent=mensaje;
+    if([401,403].includes(e.status)||['admin/sin-sesion','admin/sin-permiso','permission-denied'].includes(e.code)) {limpiar();estado.textContent=mensaje;$('accesoAdministracion').hidden=e.code!=='admin/sin-sesion'&&e.status!==401;}
   }
   async function cargar(mensaje='') {
-    const actual=++version; editor.hidden=true; seleccionado=null; bloquear(true);
+    const actual=++version; editor.hidden=true;editorEnvio.hidden=true;seleccionado=null;pedidoSeleccionado=null;bloquear(true);
     registros=[];$('listaRegistros').replaceChildren();$('cantidadRegistros').textContent='';estado.textContent='Cargando…';
+    if(seccion==='pedidos'){pedidos=[];$('estadoPedidos').textContent='Cargando pedidos…';$('listaPedidos').replaceChildren();}
     try {
       if(seccion==='estadisticas') {
         const result=await servicio.consultarEstadisticasAdministracion();if(actual!==version)return;
         administrador=result.administrador;panel.hidden=false;$('accesoAdministracion').hidden=true;estado.textContent='';mostrarEstadisticas(result);
+      } else if(seccion==='pedidos') {
+        const result=await servicio.listarPedidosAdministracion();if(actual!==version)return;
+        pedidos=result.pedidos;administrador=result.administrador;panel.hidden=false;$('accesoAdministracion').hidden=true;estado.textContent='';$('estadoPedidos').textContent='';mostrarPedidos();
       } else {
         const result=await api();if(actual!==version)return;
         registros=result.items;administrador=result.administrador;panel.hidden=false;$('accesoAdministracion').hidden=true;estado.textContent=mensaje;
       }
-    } catch(e) {if(actual===version)error(e);}
+    } catch(e) {if(actual===version)error(e,seccion==='pedidos'?$('estadoPedidos'):estado);}
     finally {if(actual===version)bloquear(false);}
   }
   const numero=valor=>new Intl.NumberFormat('es-UY').format(valor||0);
@@ -95,6 +102,26 @@ document.addEventListener('DOMContentLoaded', async () => {
       fechaHora(venta.fecha),'#'+venta.id,venta.productos.map(item=>`${item.nombre} × ${numero(item.cantidad)}`).join(', ')||'Sin detalle',venta.medioPago,dinero(venta.total)
     ]),'Todavía no hay ventas confirmadas.');
     $('estadoEstadisticas').textContent='Estadísticas actualizadas.';
+  }
+  function mostrarPedidos() {
+    const lista=$('listaPedidos');lista.replaceChildren();$('cantidadPedidos').textContent=`${numero(pedidos.length)} pedido(s)`;
+    if(!pedidos.length){lista.append(crear('p','', 'No hay pedidos registrados.'));return;}
+    pedidos.forEach(pedido=>{
+      const card=crear('article','admin-usuario'),info=crear('div','admin-usuario-datos'),acciones=crear('div','d-flex flex-wrap gap-2');
+      const productos=pedido.productos.map(item=>`${item.nombre} × ${numero(item.cantidad)}`).join(', ')||'Sin detalle de productos';
+      info.append(crear('h3','h5',`Pedido #${pedido.id}`),crear('p','mb-1',`${pedido.datosEnvio.nombreCompleto||'Cliente'} · ${fechaHora(pedido.fecha)}`),crear('p','mb-1',productos),crear('p','mb-0',`${dinero(pedido.total)} · Envío: ${pedido.envioEstado}`));
+      const gestionar=crear('button','btn btn-robotech','Gestionar envío');gestionar.type='button';gestionar.addEventListener('click',()=>abrirPedido(pedido));acciones.append(gestionar);card.append(info,acciones);lista.append(card);
+    });
+  }
+  function abrirPedido(pedido) {
+    pedidoSeleccionado=pedido;editorEnvio.reset();$('estadoEditorEnvio').textContent='';
+    $('tituloEditorEnvio').textContent=`Gestionar envío · Pedido #${pedido.id}`;
+    const detalle=$('detallePedidoEnvio');detalle.replaceChildren();
+    const direccion=[pedido.datosEnvio.direccion,pedido.datosEnvio.ciudad,pedido.datosEnvio.departamento].filter(Boolean).join(', ');
+    detalle.append(crear('p','mb-1',`${pedido.datosEnvio.nombreCompleto||'Cliente'} · ${pedido.datosEnvio.telefono||'Sin teléfono'}`),crear('p','mb-2',direccion||'Sin dirección de envío'),crear('p','mb-1',`Pedido del ${fechaHora(pedido.fecha)} · ${dinero(pedido.total)} · ${pedido.medioPago}`));
+    const productos=crear('ul','mb-0');pedido.productos.forEach(item=>productos.append(crear('li','',`${item.nombre} × ${numero(item.cantidad)}`)));detalle.append(productos);
+    $('envioEstado').value=pedido.envioEstado;$('envioTransportista').value=pedido.envioTransportista;$('envioSeguimiento').value=pedido.envioSeguimiento;$('envioNotas').value=pedido.envioNotas;
+    editorEnvio.hidden=false;editorEnvio.scrollIntoView({behavior:'smooth',block:'nearest'});$('envioEstado').focus();
   }
   function mostrar() {
     const q=normalizar($('buscarRegistro').value), productos=seccion==='productos';
@@ -165,8 +192,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   function cambiar(tab) {
     if(ocupado)return;seccion=tab.dataset.seccion;$('buscarRegistro').value='';$('grupoFiltroRol').hidden=seccion!=='usuarios';
     document.querySelectorAll('[role=tab]').forEach(t=>{const active=t===tab;t.classList.toggle('active',active);t.setAttribute('aria-selected',String(active));t.tabIndex=active?0:-1;});
-    $('adminContenido').setAttribute('aria-labelledby',tab.id);gestion.hidden=seccion==='estadisticas';estadisticas.hidden=seccion!=='estadisticas';
-    if(seccion!=='estadisticas'){$('tituloListado').textContent=seccion==='usuarios'?'Usuarios registrados':'Productos del catálogo';$('nuevoRegistro').textContent=seccion==='usuarios'?'Nuevo usuario':'Nuevo producto';}
+    const edicion=['usuarios','productos'].includes(seccion);
+    $('adminContenido').setAttribute('aria-labelledby',tab.id);gestion.hidden=!edicion;estadisticas.hidden=seccion!=='estadisticas';pedidosPanel.hidden=seccion!=='pedidos';editorEnvio.hidden=true;$('nuevoRegistro').hidden=!edicion;
+    if(edicion){$('tituloListado').textContent=seccion==='usuarios'?'Usuarios registrados':'Productos del catálogo';$('nuevoRegistro').textContent=seccion==='usuarios'?'Nuevo usuario':'Nuevo producto';}
     cargar();
   }
   const pestanas=[...document.querySelectorAll('[role=tab]')];
@@ -174,6 +202,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   $('buscarRegistro').addEventListener('input',mostrar);$('filtroRol').addEventListener('change',mostrar);$('nuevoRegistro').addEventListener('click',()=>abrir());
   $('cancelarRegistro').addEventListener('click',()=>{editor.reset();editor.hidden=true;seleccionado=null;$('nuevoRegistro').focus();});
   $('actualizarEstadisticas').addEventListener('click',()=>cargar());
+  $('actualizarPedidos').addEventListener('click',()=>cargar());
+  $('cancelarEnvio').addEventListener('click',()=>{editorEnvio.reset();editorEnvio.hidden=true;pedidoSeleccionado=null;$('estadoEditorEnvio').textContent='';});
+  editorEnvio.addEventListener('submit',async e=>{
+    e.preventDefault();if(ocupado||!pedidoSeleccionado||!editorEnvio.reportValidity())return;
+    const cambios={envioEstado:$('envioEstado').value,envioTransportista:$('envioTransportista').value.trim(),envioSeguimiento:$('envioSeguimiento').value.trim(),envioNotas:$('envioNotas').value.trim()};
+    const actual=version;bloquear(true);$('estadoEditorEnvio').textContent='Guardando envío…';
+    try {await servicio.actualizarEnvioPedidoAdministracion(pedidoSeleccionado.id,cambios);if(actual!==version)return;await cargar('');$('estadoPedidos').textContent='Los datos del envío se actualizaron.';}
+    catch(e){if(actual===version){error(e,$('estadoEditorEnvio'));bloquear(false);}}
+  });
   $('accesoAdministracion').addEventListener('click',()=>$('btnLoginPlaceholder').click());
-  try {servicio=await import('./firebase.js?v=kits-20261011');servicio.observarSesion(()=>{++version;limpiar();cargar();});}catch(e){error(e);}
+  try {servicio=await import('./firebase.js?v=pedidos-20261027');servicio.observarSesion(()=>{++version;limpiar();cargar();});}catch(e){error(e);}
 });

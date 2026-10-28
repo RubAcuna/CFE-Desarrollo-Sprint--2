@@ -94,6 +94,18 @@ service cloud.firestore {
     }
     // Cada compra pertenece al usuario autenticado y se crea junto con el descuento de stock.
     match /compras/{compraId} {
+      function envioAdministrativoValido() {
+        let pedido = request.resource.data;
+        return administrador()
+          && resource.data.estado == 'confirmada'
+          && pedido.diff(resource.data).affectedKeys().hasOnly(['envioEstado','envioTransportista','envioSeguimiento','envioNotas','envioActualizadoEn','envioActualizadoPor'])
+          && pedido.envioEstado in ['Pendiente','En preparación','Listo para despacho','Enviado','En tránsito','Entregado','Incidencia']
+          && pedido.envioTransportista is string && pedido.envioTransportista.size() <= 80
+          && pedido.envioSeguimiento is string && pedido.envioSeguimiento.size() <= 100
+          && pedido.envioNotas is string && pedido.envioNotas.size() <= 500
+          && pedido.envioActualizadoEn == request.time
+          && pedido.envioActualizadoPor == request.auth.uid;
+      }
       function compraValida() {
         let c = request.resource.data;
         return request.auth != null
@@ -120,7 +132,8 @@ service cloud.firestore {
       allow get: if request.auth != null && (resource.data.usuarioId == request.auth.uid || administrador());
       // La consulta del cliente incluye where('usuarioId', '==', request.auth.uid).
       allow list: if request.auth != null && (administrador() || resource.data.usuarioId == request.auth.uid);
-      allow update, delete: if false;
+      allow update: if envioAdministrativoValido();
+      allow delete: if false;
     }
     // Reseñas públicas; existe como máximo un documento por usuario y producto.
     match /comentarios/{comentarioId} {

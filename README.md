@@ -168,11 +168,13 @@ GitHub Pages sirve los archivos estáticos. El navegador usa Firebase Authentica
 
 Productos: edición de nombre, descripción, categoría, precio, stock, disponibilidad, imágenes y características.
 
+Pedidos: la pestaña consulta las compras confirmadas ordenadas por fecha y permite actualizar únicamente el estado logístico, transportista, seguimiento y notas. El pedido, el pago y el importe permanecen inmutables; no se cancelan pedidos ni se procesan reembolsos desde el panel.
+
 Usuarios: las altas crean una cuenta de Authentication mediante una aplicación secundaria con sesión en memoria, conservando la sesión del administrador, y guardan usuarios/{uid}. Si falla el perfil se intenta retirar la cuenta recién creada. Se editan nombre y rol; correo y operaciones sobre cuentas existentes se gestionan en la consola Authentication.
 
 Eliminar un perfil solo elimina el documento de Firestore: no elimina ni bloquea la cuenta de Authentication. Al volver a iniciar sesión puede regenerarse como Invitado. La interfaz advierte esta diferencia. El administrador no puede borrar su propio perfil ni quitarse su rol.
 
-Publicar firestore.rules en Firebase antes de usar esta versión. El dominio rubacuna.github.io debe estar autorizado en Authentication. No subir claves privadas al repositorio.
+Publicar firestore.rules en Firebase antes de usar esta versión, incluidas las reglas que permiten al administrador modificar solo los campos logísticos de una compra confirmada. El dominio rubacuna.github.io debe estar autorizado en Authentication. No subir claves privadas al repositorio.
 
 Pruebas simuladas: node tests/administracion.test.cjs, node tests/administracion-sdk.test.cjs y node tests/firestore.test.cjs. No modifican datos de producción.
 
@@ -187,7 +189,7 @@ Los archivos JavaScript se organizan así:
 - `js/firebase.js` centraliza Authentication, consultas de Firestore y la transacción de compra.
 - `js/login.js` registra usuarios con correo y contraseña o Google y mantiene el perfil en `usuarios/{uid}`.
 
-La confirmación crea `compras/{id}` con fecha y hora del servidor, usuario, productos, total, pago, facturación y envío. En la misma transacción vuelve a leer cada producto, valida la cantidad y descuenta el stock. Si falta inventario, cambia la sesión o falla una escritura, Firestore revierte toda la operación. Al llegar a cero actualiza `disponible` a `false`. Las reglas permiten crear compras propias y bloquean modificaciones posteriores.
+La confirmación crea `compras/{id}` con fecha y hora del servidor, usuario, productos, total, pago, facturación y envío. En la misma transacción vuelve a leer cada producto, valida la cantidad y descuenta el stock. Si falta inventario, cambia la sesión o falla una escritura, Firestore revierte toda la operación. Al llegar a cero actualiza `disponible` a `false`. Las reglas bloquean las modificaciones del pedido y del pago; solo el administrador puede actualizar los campos de logística definidos por el panel.
 
 ## Mis productos y reseñas
 

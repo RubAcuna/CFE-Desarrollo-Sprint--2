@@ -352,6 +352,60 @@ export async function consultarEstadisticasAdministracion() {
   };
 }
 
+const estadosEnvio = ['Pendiente', 'En preparación', 'Listo para despacho', 'Enviado', 'En tránsito', 'Entregado', 'Incidencia'];
+
+// Devuelve solo los campos que necesita el administrador para preparar un pedido y coordinar su entrega.
+export async function listarPedidosAdministracion() {
+  const administrador = await comprobarAdministrador();
+  const snapshot = await getDocsFromServer(collection(getFirestore(app), 'compras'));
+  if (auth().currentUser?.uid !== administrador) throw Object.assign(new Error('La sesión cambió.'), { code: 'admin/sin-sesion' });
+  const pedidos = snapshot.docs.map(documento => {
+    const compra = documento.data(), envio = compra.datosEnvio || {};
+    const productos = Object.values(compra.productos || {}).map(item => ({
+      nombre: String(item.nombre || item.id || 'Kit'),
+      cantidad: Number.isSafeInteger(item.cantidad) && item.cantidad > 0 ? item.cantidad : 0
+    })).filter(item => item.cantidad > 0);
+    return {
+      id: documento.id, fecha: compra.fecha || null, estado: String(compra.estado || ''),
+      total: Number.isFinite(compra.total) ? compra.total : 0, medioPago: String(compra.medioPago || '—'),
+      productos,
+      datosEnvio: {
+        nombreCompleto: String(envio.nombreCompleto || ''), departamento: String(envio.departamento || ''),
+        ciudad: String(envio.ciudad || ''), direccion: String(envio.direccion || ''), telefono: String(envio.telefono || '')
+      },
+      envioEstado: estadosEnvio.includes(compra.envioEstado) ? compra.envioEstado : 'Pendiente',
+      envioTransportista: typeof compra.envioTransportista === 'string' ? compra.envioTransportista : '',
+      envioSeguimiento: typeof compra.envioSeguimiento === 'string' ? compra.envioSeguimiento : '',
+      envioNotas: typeof compra.envioNotas === 'string' ? compra.envioNotas : ''
+    };
+  }).sort((a, b) => (b.fecha?.toMillis?.() || Date.parse(b.fecha || '') || 0) - (a.fecha?.toMillis?.() || Date.parse(a.fecha || '') || 0));
+  return { administrador, pedidos };
+}
+
+// El administrador solo puede editar datos logísticos; el pedido y su importe quedan inmutables.
+export async function actualizarEnvioPedidoAdministracion(id, cambios) {
+  const textoOpcional = (valor, maximo, nombre) => {
+    if (typeof valor !== 'string' || valor.trim().length > maximo) throw Object.assign(new Error(`Revisa el campo ${nombre}.`), { code: 'admin/datos-invalidos' });
+    return valor.trim();
+  };
+  if (typeof id !== 'string' || !id || id.includes('/') || !estadosEnvio.includes(cambios?.envioEstado)) {
+    throw Object.assign(new Error('El pedido o el estado de envío no es válido.'), { code: 'admin/datos-invalidos' });
+  }
+  const datos = {
+    envioEstado: cambios.envioEstado,
+    envioTransportista: textoOpcional(cambios.envioTransportista, 80, 'transportista'),
+    envioSeguimiento: textoOpcional(cambios.envioSeguimiento, 100, 'número de seguimiento'),
+    envioNotas: textoOpcional(cambios.envioNotas, 500, 'notas')
+  };
+  const administrador = await comprobarAdministrador(), referencia = doc(getFirestore(app), 'compras', id);
+  const pedido = await getDocFromServer(referencia);
+  if (!pedido.exists()) throw Object.assign(new Error('El pedido ya no existe.'), { code: 'admin/pedido-no-existe' });
+  if (pedido.data().estado !== 'confirmada') throw Object.assign(new Error('Solo se puede actualizar el envío de pedidos confirmados.'), { code: 'admin/pedido-no-confirmado' });
+  if (auth().currentUser?.uid !== administrador) throw Object.assign(new Error('La sesión cambió.'), { code: 'admin/sin-sesion' });
+  await updateDoc(referencia, { ...datos, envioActualizadoEn: serverTimestamp(), envioActualizadoPor: administrador });
+  return { ok: true };
+}
+
 // Devuelve únicamente los atributos que el panel necesita; omite campos antiguos o sensibles.
 function resumirUsuario(documento) {
   const datos = documento.data();

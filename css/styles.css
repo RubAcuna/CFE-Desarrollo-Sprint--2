@@ -967,6 +967,7 @@ article:hover {
     border-radius: 12px;
 }
 .admin-usuario-datos { flex: 1 1 240px; min-width: 0; overflow-wrap: anywhere; }
+.pedido-envio-detalle { padding: 1rem; color: #14213d; background: #f4f6fb; border-left: 4px solid #00bde7; border-radius: 8px; overflow-wrap: anywhere; }
 
 /* Productos comprados y reseñas vinculadas a la sesión de Firebase. */
 .producto-comprado,
