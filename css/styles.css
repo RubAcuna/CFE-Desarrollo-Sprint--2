@@ -5,6 +5,7 @@
     --ink: #172033;
     --surface: #f5f7fb;
     --accent: #ffc107;
+    --gradient-navigation: linear-gradient(90deg, #14213d, #ca06bd);
     --gradient-robotech: linear-gradient(90deg, #3b0238, #14213d);
     --gradient-robotech-page: linear-gradient(270deg, #14213d 0%, #ca06bd 100%);
 }
@@ -144,7 +145,7 @@ article:hover {
 }
 
 .navbar {
-     background: linear-gradient(90deg, #14213d, #ca06bd)
+    background: var(--gradient-navigation);
 }
 .navbar2 {
     color: #fff;
@@ -741,19 +742,17 @@ article:hover {
 }
 
 .footer {
-    background: var(--gradient-robotech-page);
-    color: #aeb7c8;
+    background: #14213d;
+    color: #fff;
     min-height: 240px;
 }
 
 .footer-top {
-    display: grid !important;
-    grid-template-columns: minmax(0, 1fr) minmax(260px, 1fr);
-    grid-template-areas:
-        "brand contact"
-        "author contact";
-    align-items: start !important;
-    column-gap: 48px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-areas: "brand contact project";
+    align-items: start;
+    column-gap: 32px;
     row-gap: 12px;
 }
 
@@ -781,6 +780,67 @@ article:hover {
     gap: 4px;
 }
 
+.footer-social {
+    margin-top: 16px;
+    text-align: center;
+}
+
+.footer-social-title {
+    display: block;
+    margin-bottom: 10px;
+    font-size: .85rem;
+    font-weight: 600;
+}
+
+.footer-social-list {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.footer-social-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    color: #fff;
+    border: 1px solid rgb(255 255 255 / 55%);
+    border-radius: 50%;
+    background: rgb(255 255 255 / 10%);
+}
+
+/* Rosa y brillo de la identidad Robotech para las cuatro redes. */
+.footer-social-icon {
+    transition: transform .2s ease, background-color .2s ease,
+        border-color .2s ease, box-shadow .2s ease;
+}
+
+.footer-social-icon:hover,
+.footer-social-icon:focus-within {
+    color: #fff;
+    background-color: #5c0659;
+    border-color: #ec0aa6;
+    box-shadow: 0 0 0 1px #ec0aa6, 0 5px 18px rgb(236 10 166 / 45%);
+    transform: translateY(-3px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .footer-social-icon { transition: none; }
+    .footer-social-icon:hover,
+    .footer-social-icon:focus-within { transform: none; }
+}
+
+.footer-social-icon svg {
+    width: 21px;
+    height: 21px;
+    flex-shrink: 0;
+}
+
 .footer-slogan {
     color: inherit;
     font-size: .85rem;
@@ -788,7 +848,8 @@ article:hover {
     letter-spacing: .04em;
 }
 
-.footer-contact h2 {
+.footer-contact h2,
+.footer-project h2 {
     margin-bottom: 14px;
     color: #fff;
     font-size: 1.2rem;
@@ -797,6 +858,19 @@ article:hover {
 
 .footer-contact {
     grid-area: contact;
+}
+
+.footer-project {
+    grid-area: project;
+}
+
+.footer-top > * {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.footer-project p {
+    margin-bottom: 12px;
 }
 
 .footer-contact address {
@@ -813,8 +887,10 @@ article:hover {
     transition: color .2s ease;
 }
 
-.footer-contact .contact-item:hover {
-    color: #ec0aa6;
+.footer-contact .contact-item:hover,
+.footer-contact .contact-item:focus-visible {
+    color: #fff;
+    text-decoration: underline;
 }
 
 .footer-divider {
@@ -831,7 +907,6 @@ article:hover {
 }
 
 .footer-author {
-    grid-area: author;
     padding-top: 4px;
 }
 
@@ -876,8 +951,8 @@ article:hover {
         grid-template-columns: 1fr;
         grid-template-areas:
             "brand"
-            "author"
-            "contact";
+            "contact"
+            "project";
         row-gap: 22px;
     }
 
